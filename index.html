@@ -134,6 +134,13 @@ li.cur .num{background:var(--ball);border-color:var(--ball);color:var(--ball-ink
 @media (prefers-reduced-motion:no-preference){.sq.hit,.sq.miss{animation:pop .35s ease-out}@keyframes pop{0%{transform:scale(.85)}60%{transform:scale(1.08)}100%{transform:none}}}
 .cardhead{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
 #confetti{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:50}
+#game{display:flex;flex-direction:column;gap:20px}
+.roombar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 12px}
+.roombar .lbl{font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.code{font-family:var(--display);font-size:22px;letter-spacing:.12em;color:var(--fg)}
+.roombar .sp{flex:1}
+.or{text-align:center;font-size:13px;color:var(--muted)}
+#codeIn{text-transform:uppercase;letter-spacing:.25em;font-family:var(--display)}
 .setup{background:var(--up);border:2px solid var(--up-line);border-radius:14px;padding:14px;font-size:15px}
 .setup code{font-size:14px}
 </style>
@@ -146,6 +153,27 @@ li.cur .num{background:var(--ball);border-color:var(--ball);color:var(--ball-ink
   </header>
 
   <div class="setup" id="setup" hidden><strong>Almost ready.</strong> Paste your Firebase settings into the <code>FIREBASE_CONFIG</code> section of index.html, then upload it again.</div>
+
+  <section class="panel" id="lobby" hidden>
+    <h2>Start or join a game</h2>
+    <button class="big" id="createBtn" type="button">Start a new game</button>
+    <div class="or">or join with a game code</div>
+    <form id="codeForm" class="row" style="flex-wrap:nowrap">
+      <label for="codeIn" hidden>Game code</label>
+      <input id="codeIn" maxlength="6" placeholder="CODE" autocapitalize="characters" autocomplete="off" autocorrect="off" spellcheck="false" style="flex:1 1 auto;min-width:0">
+      <button class="pri" type="submit" style="flex:0 0 auto">Join</button>
+    </form>
+    <p class="msg" id="lobbyMsg" aria-live="polite"></p>
+  </section>
+
+  <div id="game" hidden>
+  <div class="roombar">
+    <span class="lbl">Game code</span><span class="code" id="roomCode"></span>
+    <span class="sp"></span>
+    <button class="pri" id="shareBtn" type="button" style="padding:8px 12px;font-size:14px">Invite</button>
+    <button class="ghost" id="switchBtn" type="button">Switch game</button>
+  </div>
+  <p class="msg" id="shareMsg" aria-live="polite" hidden></p>
 
   <div class="turn" id="turnBox" hidden>
     <div style="flex:1;min-width:0">
@@ -216,7 +244,7 @@ li.cur .num{background:var(--ball);border-color:var(--ball);color:var(--ball-ink
     <p class="msg" id="msg" aria-live="polite"></p>
   </section>
 
-  <div class="host" style="justify-content:space-between">
+  <div class="host" id="hostBar" style="justify-content:space-between">
     <div class="seg" id="timerSeg"><span>Timer</span>
       <button type="button" data-s="0">Off</button><button type="button" data-s="15">15s</button><button type="button" data-s="30">30s</button><button type="button" data-s="60">60s</button>
     </div>
@@ -226,6 +254,8 @@ li.cur .num{background:var(--ball);border-color:var(--ball);color:var(--ball-ink
     <button class="ghost" id="newGame" type="button">New game</button>
     <button class="warn" id="newYes" type="button" hidden>Yes, reshuffle and start over</button>
     <button class="ghost" id="newNo" type="button" hidden>Cancel</button>
+  </div>
+  <p class="note" id="hostNote"></p>
   </div>
   <p class="note" id="status">Connecting…</p>
 </div>
@@ -245,11 +275,9 @@ const FIREBASE_CONFIG = {
   messagingSenderId: "391936139266",
   appId: "1:391936139266:web:8c9102c7f931b9d546471b"
 };
-/* The game room. Everyone using this site shares it. Change it to start a fresh, separate game space. */
-const ROOM = "family";
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getDatabase, ref, child, set, update, push, remove, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+import { getDatabase, ref, child, set, update, get, remove, onValue, off } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 /* Question bank: [answer, question, modifier, category] — "more" = that number or higher, "less" = that number or lower */
 const BANK = [
@@ -350,28 +378,42 @@ const BANK = [
 
 const $=id=>document.getElementById(id);
 const store={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
-let ready=false, players=[], state={turn:0,card:null,revealed:false,used:[],bingo:null,timerSecs:0,drawnAt:0,marks:null,digital:false}, canWrite=true, serverOffset=0;
+
+/* ---------- game state (mirrors the database) ---------- */
+const STATE0={turn:0,card:null,revealed:false,used:[],bingo:null,drawnAt:0};
+const SETTINGS0={timerSecs:0,digital:false,round:0};
+let uid=null, room=null, hostId=null, ready=false, serverOffset=0;
+let players=[], state={...STATE0}, settings={...SETTINGS0}, picks={};
 const serverNow=()=>Date.now()+serverOffset;
 $("name").value = store.get("tbq-name")||"";
-let myId = store.get("tbq-player");
 
+const CODE_CHARS="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";            // no 0/O or 1/I
+const CODE_RE=/^[A-HJ-NP-Z2-9]{6}$/;
+function genCode(){ const a=new Uint32Array(6); crypto.getRandomValues(a); return [...a].map(x=>CODE_CHARS[x%CODE_CHARS.length]).join(""); }
+
+const isHost=()=>!!uid && uid===hostId;
+const me=()=>players.find(x=>x.id===uid);
+const joined=()=>!!me();
 function ordered(){ return players.slice().sort((a,b)=>a.at-b.at); }
 function reader(){ const p=ordered(); return p.length? p[((state.turn||0)%p.length+p.length)%p.length] : null; }
 function nextReader(){ const p=ordered(); return p.length>1? p[((state.turn||0)+1)%p.length] : null; }
-function amReader(){ const r=reader(); return !!r && (r.id===myId); }
-
+function amReader(){ const r=reader(); return !!r && r.id===uid; }
+const hasCard=()=>state.card!==null && state.card!==undefined && !!BANK[state.card];
+/* a pick only counts for the question it was made on */
+function pickOf(id){ const p=picks[id]; return p && state.drawnAt && p.q===state.drawnAt ? p.v : null; }
+function pickIdx(id){ const v=pickOf(id); return typeof v==="string" && v.startsWith("sq") ? Number(v.slice(2)) : -1; }
+function fits(num){ if(!hasCard()) return false; const [n,,m]=BANK[state.card]; return m==="more" ? num>=n : num<=n; }
 
 function render(){
-  const p=ordered(), r=reader(), nx=nextReader(), mine=amReader(), digital=!!state.digital;
+  const p=ordered(), r=reader(), nx=nextReader(), mine=amReader(), digital=!!settings.digital, m0=me(), inGame=!!m0;
   // turn banner
   $("turnBox").hidden = !r;
   if(r){ $("readerName").textContent = r.name + (mine?" (you)":""); $("nextName").textContent = nx? "Up next: "+nx.name : ""; }
-  // card
-  const c = state.card, has = c!==null && c!==undefined && BANK[c];
+  // question card
+  const has=hasCard(), c=state.card;
   const showAns = has && (mine || state.revealed);
-  $("qempty").hidden = !!has; $("qtext").hidden = !has; $("qcat").hidden = !has;
-  $("rule").hidden = !showAns; $("mod").hidden = !showAns;
-  $("arrow").hidden = !showAns;
+  $("qempty").hidden = has; $("qtext").hidden = !has; $("qcat").hidden = !has;
+  $("rule").hidden = !showAns; $("mod").hidden = !showAns; $("arrow").hidden = !showAns;
   $("bnum").textContent = showAns ? BANK[c][0] : "?";
   $("qcount").textContent = has ? "Card " + (state.used||[]).length + " of " + BANK.length : "";
   $("qhint").textContent = !has ? "" : state.revealed ? "· Answer revealed" : mine ? "· Only you can see the answer" : "· Answer hidden until revealed";
@@ -384,107 +426,127 @@ function render(){
       : '<svg viewBox="0 0 26 34"><path d="M9 0 H17 V20 H26 L13 34 L0 20 H9 Z" fill="#e5503f"/></svg>';
   }
   // reader controls
-  $("readerCtl").hidden = !(mine && canWrite);
-  $("drawBtn").hidden = !!has;
+  $("readerCtl").hidden = !mine;
+  $("drawBtn").hidden = has;
   $("revealBtn").hidden = !has || state.revealed;
   $("skipBtn").hidden = !has || state.revealed;
   $("passBtn").hidden = !has || !state.revealed;
   $("watchMsg").textContent = (!mine && r) ? (has? (state.revealed? r.name+" will pass to the next reader." : "Answer out loud! "+r.name+" will reveal the number.") : r.name+" is about to draw a question.") : "";
-  // timer setting + countdown
-  document.querySelectorAll("#timerSeg button").forEach(b=>b.classList.toggle("on", Number(b.dataset.s)===(Number(state.timerSecs)||0)));
+  // host settings
+  document.querySelectorAll("#timerSeg button").forEach(b=>b.classList.toggle("on", Number(b.dataset.s)===(Number(settings.timerSecs)||0)));
+  document.querySelectorAll("#cardSeg button").forEach(b=>b.classList.toggle("on", (b.dataset.d==="1")===digital));
+  $("hostBar").hidden = !isHost();
+  const host=players.find(x=>x.id===hostId);
+  $("hostNote").textContent = isHost() ? "You're the host: only you can change settings, start a new game or remove players."
+    : host ? host.name+" is the host and controls the settings." : "";
   tick();
-  // marks: after the reveal, every player says whether a number went on their card
-  const marks = state.marks || {};
-  const meP = p.find(x=>x.id===myId);
+  // paper cards: "Number pressed"
   const markOpen = has && state.revealed;
-  $("markBox").hidden = !markOpen || !meP || digital;
-  if(markOpen){
-    const pressed = marks[myId]==="yes";
+  $("markBox").hidden = !markOpen || !inGame || digital;
+  if(markOpen && !digital){
+    const pressed = pickOf(uid)==="yes";
     $("markYes").classList.toggle("sel", pressed);
-    $("markYes").textContent = pressed ? "Number pressed \u2713  (tap to undo)" : "Number pressed";
-    const yes = p.filter(x=>marks[x.id]).map(x=>x.name);
+    $("markYes").textContent = pressed ? "Number pressed ✓  (tap to undo)" : "Number pressed";
+    const yes = p.filter(x=>pickOf(x.id)==="yes").map(x=>x.name);
     $("markSum").textContent = yes.length ? "Pressed: "+yes.join(", ") : "Tap if you put a number on your card.";
   }
-  // bingo
-  const me = p.find(x=>x.id===myId);
-  const bg = state.bingo;
   // digital card
-  document.querySelectorAll("#cardSeg button").forEach(b=>b.classList.toggle("on", (b.dataset.d==="1")===digital));
-  const myCard = digital && me && me.card ? me.card : null;
-  const lines = myCard ? doneLines(me.card, me.marked) : [];
+  const myCard = digital && m0 && m0.card && (m0.round||0)===(settings.round||0) ? m0.card : null;
+  const lines = myCard ? doneLines(myCard, m0.marked) : [];
   const line = lines.length >= LINES_TO_WIN;
   const winSet = new Set(lines.flat());
   $("cardBox").hidden = !myCard;
   if(myCard){
-    const cur = (state.marks||{})[myId];
-    const pickIdx = typeof cur==="string" && cur.startsWith("sq") ? Number(cur.slice(2)) : -1;
-    const marked = me.marked||{}, misses = me.misses||{};
-    const open = has && !state.revealed && !mine && canWrite && !timeUp();
+    const pi = pickIdx(uid), marked=m0.marked||{}, misses=m0.misses||{};
+    const open = has && !state.revealed && !mine && !timeUp();
     const grid=$("grid"); grid.replaceChildren();
     myCard.forEach((num,i)=>{
-      const b=document.createElement("button"); b.type="button"; b.className="sq"; b.id="sq"+i;
-      b.textContent=num;
+      const b=document.createElement("button"); b.type="button"; b.className="sq"; b.id="sq"+i; b.textContent=num;
       let label=String(num);
       if(marked[i]){ b.classList.add("hit"); label+=", correct"; }
-      else if(misses[i]){ b.classList.add("miss"); label+=", wrong this round"; }
-      else if(!state.revealed && i===pickIdx){ b.classList.add("pick"); label+=", your pick"; }
+      else if(misses[i]){ b.classList.add("miss"); label+=", wrong"; }
+      else if(!state.revealed && i===pi){ b.classList.add("pick"); label+=", your pick"; }
       if(winSet.has(i)) b.classList.add("win");
       b.disabled = !(open && !marked[i]);
       b.setAttribute("aria-label", label);
       b.onclick=()=>tapSquare(i);
       grid.append(b);
     });
-    const greens = Object.keys(marked).length;
-    $("cardCount").textContent = greens+" correct \u00b7 "+lines.length+" of "+LINES_TO_WIN+" lines";
+    $("cardCount").textContent = Object.keys(marked).length+" correct · "+lines.length+" of "+LINES_TO_WIN+" lines";
     let msg;
     if(line) msg="Two lines! Tap BINGO.";
     else if(!has) msg = lines.length===1 ? "One line done. One more for Bingo!" : "When a question is drawn, tap the number you think is the answer.";
     else if(mine && !state.revealed) msg="You're reading this one, so no pick for you this round.";
-    else if(!state.revealed) msg = timeUp() ? (pickIdx>=0 ? "Time's up. Locked in "+myCard[pickIdx]+"." : "Time's up. No pick this round.")
-                                : pickIdx>=0 ? "Locked in "+myCard[pickIdx]+". Tap another number to change it, or tap it again to clear." : "Tap the number you think is the answer.";
-    else if(pickIdx>=0 && marked[pickIdx]) msg="Correct! "+myCard[pickIdx]+" is yours.";
-    else if(pickIdx>=0) msg="Not this time. Your reds clear when it's your turn to read.";
+    else if(!state.revealed) msg = timeUp() ? (pi>=0 ? "Time's up. Locked in "+myCard[pi]+"." : "Time's up. No pick this round.")
+                                : pi>=0 ? "Locked in "+myCard[pi]+". Tap another number to change it, or tap it again to clear." : "Tap the number you think is the answer.";
+    else if(pi>=0 && fits(myCard[pi])) msg="Correct! "+myCard[pi]+" is yours.";
+    else if(pi>=0) msg="Not this time. Your reds clear when it's your turn to read.";
     else msg = mine ? "You read this one." : "No pick this round.";
     if(lines.length===1 && !line && has && state.revealed) msg+=" One line done!";
     $("cardMsg").textContent = msg;
   }
-  $("bingoBtn").hidden = !(me && canWrite) || !!bg || (digital && !line);
+  // bingo
+  const bg = state.bingo;
+  $("bingoBtn").hidden = !inGame || !!bg || (digital && !line);
   $("bingoBanner").hidden = !bg;
   if(bg){
     if(bg.confirmed && bg.confirmedAt && confettiFor!==bg.confirmedAt){ confettiFor=bg.confirmedAt; if(serverNow()-bg.confirmedAt < 20000) confetti(); }
     $("bingoTag").textContent = bg.confirmed ? "Winner" : "Bingo called";
     $("bingoWho").textContent = bg.confirmed ? bg.name+" wins!" : bg.name+" has Bingo!";
     $("bingoSub").textContent = bg.confirmed ? (bg.digital ? "Two full lines on their card. Nice game, everyone." : "Nice game, everyone.") : "Hold the next question while everyone checks their card.";
-    $("bingoCheck").hidden = !!bg.confirmed || !canWrite;
-    $("bingoDone").hidden = !bg.confirmed || !canWrite;
+    $("bingoCheck").hidden = !!bg.confirmed || !inGame;
+    $("bingoDone").hidden = !bg.confirmed || !isHost();
   }
-  // players
+  // reading order
   const ol=$("players"); ol.replaceChildren();
   p.forEach((pl,i)=>{
     const li=document.createElement("li"); if(r && pl.id===r.id) li.className="cur";
     const n=document.createElement("div"); n.className="num"; n.textContent=i+1;
     const nm=document.createElement("div"); nm.className="pname"; nm.textContent=pl.name;
-    if(pl.id===myId){ const y=document.createElement("span"); y.className="you"; y.textContent="  · you"; nm.append(y); }
+    const tags=[]; if(pl.id===hostId) tags.push("host"); if(pl.id===uid) tags.push("you");
+    if(tags.length){ const y=document.createElement("span"); y.className="you"; y.textContent="  · "+tags.join(" · "); nm.append(y); }
     li.append(n,nm);
-    const mv=(state.marks||{})[pl.id];
-    if(digital && has && typeof mv==="string" && mv.startsWith("sq")){
-      const idx=Number(mv.slice(2)), ch=document.createElement("span");
+    const v=pickOf(pl.id);
+    if(digital && has && typeof v==="string" && v.startsWith("sq") && pl.card){
+      const ch=document.createElement("span"), num=pl.card[Number(v.slice(2))];
       if(!state.revealed){ ch.className="chip pick"; ch.textContent="Picked"; }
-      else if(pl.marked && pl.marked[idx]){ ch.className="chip yes"; ch.textContent="Correct"; }
+      else if(fits(num)){ ch.className="chip yes"; ch.textContent="Correct"; }
       else { ch.className="chip no"; ch.textContent="Missed"; }
       li.append(ch);
-    } else if(!digital && markOpen && mv){ const ch=document.createElement("span"); ch.className="chip yes"; ch.textContent="Pressed"; li.append(ch); }
-    if(canWrite){ const b=document.createElement("button"); b.className="ghost"; b.type="button"; b.textContent= pl.id===myId? "Leave":"Remove";
+    } else if(!digital && markOpen && v==="yes"){ const ch=document.createElement("span"); ch.className="chip yes"; ch.textContent="Pressed"; li.append(ch); }
+    const canRemove = isHost() ? pl.id!==uid : pl.id===uid;
+    if(canRemove){ const b=document.createElement("button"); b.className="ghost"; b.type="button"; b.textContent= pl.id===uid? "Leave":"Remove";
       b.onclick=()=>removePlayer(pl); li.append(b); }
     ol.append(li);
   });
   if(!p.length){ const li=document.createElement("li"); li.style.color="var(--muted)"; li.textContent="No one has joined yet. Add your name to take the first turn."; ol.append(li); }
-  const joined = p.some(x=>x.id===myId);
-  $("join").hidden = joined || !canWrite;
+  $("join").hidden = inGame || !ready;
+}
+
+/* ---------- my own data: deal my card, score my pick, clear my reds ---------- */
+let syncing=false, syncFailAt=0;
+function syncMe(){
+  const m0=me(); if(!ready || !m0 || syncing || Date.now()-syncFailAt<5000) return;
+  const patch={};
+  if(settings.digital && (!m0.card || (m0.round||0)!==(settings.round||0))){
+    Object.assign(patch,{card:newCard(), round:settings.round||0, marked:null, misses:null, scored:null});
+  } else if(settings.digital && m0.card && state.revealed && hasCard() && m0.scored!==state.drawnAt){
+    const i=pickIdx(uid);
+    if(i>=0){ if(fits(m0.card[i])){ patch["marked/"+i]=true; patch["misses/"+i]=null; } else patch["misses/"+i]=true; }
+    patch.scored=state.drawnAt;
+  } else if(amReader() && m0.misses && Object.keys(m0.misses).length){
+    patch.misses=null;
+  }
+  if(!Object.keys(patch).length) return;
+  syncing=true;
+  update(child(playersRef, uid), patch).catch(()=>{ syncFailAt=Date.now(); }).finally(()=>{ syncing=false; });
 }
 
 async function saveState(patch){
   try{ await update(stateRef, patch); }catch(e){ $("watchMsg").textContent="Couldn't update the game. Try again."; }
+}
+async function saveSettings(patch){
+  try{ await update(settingsRef, patch); }catch(e){ $("hostNote").textContent="Only the host can change settings."; }
 }
 function drawIndex(){
   let used = (state.used||[]);
@@ -493,30 +555,17 @@ function drawIndex(){
   const pick = pool[Math.floor(Math.random()*pool.length)];
   return {pick, used:[...used, pick]};
 }
-$("drawBtn").onclick=()=>{ clearMissesFor(reader()); const d=drawIndex(); saveState({card:d.pick, used:d.used, revealed:false, drawnAt:serverNow(), marks:null}); };
-$("skipBtn").onclick=()=>{ const d=drawIndex(); saveState({card:d.pick, used:d.used, revealed:false, drawnAt:serverNow(), marks:null}); };
-$("revealBtn").onclick=async()=>{
-  if(state.digital && BANK[state.card]){
-    const [n,,m]=BANK[state.card], patch={};
-    Object.entries(state.marks||{}).forEach(([pid,v])=>{
-      if(typeof v!=="string" || !v.startsWith("sq")) return;
-      const pl=players.find(x=>x.id===pid); if(!pl || !pl.card) return;
-      const i=Number(v.slice(2)), num=pl.card[i];
-      const ok = m==="more" ? num>=n : num<=n;
-      if(ok){ patch[pid+"/marked/"+i]=true; patch[pid+"/misses/"+i]=null; }
-      else patch[pid+"/misses/"+i]=true;
-    });
-    if(Object.keys(patch).length){ try{ await update(playersRef, patch); }catch(e){} }
-  }
-  saveState({revealed:true});
-};
-$("passBtn").onclick=()=>{ clearMissesFor(nextReader() || reader()); saveState({turn:(state.turn||0)+1, card:null, revealed:false, drawnAt:0, marks:null}); };
-async function mark(v){
-  if(!myId || !stateRef) return;
-  try{ await set(child(stateRef, "marks/"+myId), v); }catch(e){ $("markSum").textContent="Couldn't save. Try again."; }
+$("drawBtn").onclick=()=>{ const d=drawIndex(); saveState({card:d.pick, used:d.used, revealed:false, drawnAt:serverNow()}); };
+$("skipBtn").onclick=()=>{ const d=drawIndex(); saveState({card:d.pick, used:d.used, revealed:false, drawnAt:serverNow()}); };
+$("revealBtn").onclick=()=>saveState({revealed:true});
+$("passBtn").onclick=()=>saveState({turn:(state.turn||0)+1, card:null, revealed:false, drawnAt:0});
+async function setPick(v){
+  try{ await set(child(picksRef, uid), v===null ? null : {q:state.drawnAt, v}); }
+  catch(e){ $("cardMsg").textContent=$("markSum").textContent="Couldn't save. Try again."; }
 }
-$("markYes").onclick=()=>mark((state.marks||{})[myId]==="yes" ? null : "yes");
-$("timerSeg").addEventListener("click", e=>{ const b=e.target.closest("button[data-s]"); if(b) saveState({timerSecs:Number(b.dataset.s)}); });
+$("markYes").onclick=()=>setPick(pickOf(uid)==="yes" ? null : "yes");
+$("timerSeg").addEventListener("click", e=>{ const b=e.target.closest("button[data-s]"); if(b) saveSettings({timerSecs:Number(b.dataset.s)}); });
+$("cardSeg").addEventListener("click", e=>{ const b=e.target.closest("button[data-d]"); if(b) saveSettings({digital:b.dataset.d==="1"}); });
 
 /* countdown */
 let beepedFor=0;
@@ -526,9 +575,10 @@ function beep(){
     o.start(); o.stop(a.currentTime+.6); }catch(e){}
   try{ navigator.vibrate && navigator.vibrate([200,100,200]); }catch(e){}
 }
+function timeUp(){ const secs=Number(settings.timerSecs)||0; return secs>0 && !!state.drawnAt && serverNow() > state.drawnAt + secs*1000; }
 function tick(){
-  const t=$("timer"), secs=Number(state.timerSecs)||0;
-  const active = secs>0 && state.card!==null && state.card!==undefined && !state.revealed && state.drawnAt;
+  const t=$("timer"), secs=Number(settings.timerSecs)||0;
+  const active = secs>0 && hasCard() && !state.revealed && state.drawnAt;
   t.hidden=!active; if(!active) return;
   const left=Math.max(0, Math.ceil((state.drawnAt + secs*1000 - serverNow())/1000));
   if(left===0){ t.className="timer up"; t.textContent="Time's up!"; if(beepedFor!==state.drawnAt){ beepedFor=state.drawnAt; if(serverNow()-state.drawnAt < secs*1000+3000) beep(); } }
@@ -539,29 +589,27 @@ setInterval(tick, 250);
 async function removePlayer(pl){
   const p=ordered(); const idx=p.findIndex(x=>x.id===pl.id); const ridx=((state.turn||0)%p.length+p.length)%p.length;
   try{
+    if(idx < ridx) await saveState({turn:(state.turn||0)-1});   // keep the same reader after removal
     await remove(child(playersRef, pl.id));
-    if(pl.id===myId){ myId=null; store.set("tbq-player",""); }
-    if(idx < ridx) await saveState({turn:(state.turn||0)-1});
+    if(pl.id===uid) await remove(child(picksRef, uid)).catch(()=>{});
   }catch(e){ $("msg").textContent="Couldn't remove. Try again."; }
 }
 
 $("join").addEventListener("submit", async ev=>{
   ev.preventDefault();
-  const name=$("name").value.trim();
+  const name=$("name").value.trim().slice(0,24);
   if(!name){ $("msg").textContent="Add your name first."; $("name").focus(); return; }
   if(!ready){ $("msg").textContent="Still connecting…"; return; }
-  const existing = players.find(x=>x.name.toLowerCase()===name.toLowerCase());
-  if(existing){ myId=existing.id; store.set("tbq-player",myId); store.set("tbq-name",name); $("msg").textContent="Welcome back, "+existing.name+"."; render(); return; }
+  if(players.some(x=>x.name.toLowerCase()===name.toLowerCase())){ $("msg").textContent="Someone already has that name. Add an initial."; return; }
   $("joinBtn").disabled=true;
   try{
-    const r = push(playersRef);
-    await set(r, state.digital ? {name, at:Date.now(), card:newCard()} : {name, at:Date.now()});
-    myId=r.key; store.set("tbq-player",myId); store.set("tbq-name",name); $("msg").textContent="You're in the reading order.";
+    const data={name, at:serverNow()};
+    if(settings.digital){ data.card=newCard(); data.round=settings.round||0; }
+    await set(child(playersRef, uid), data);
+    store.set("tbq-name",name); $("msg").textContent="You're in the reading order.";
   }catch(e){ $("msg").textContent = "Couldn't join. Check your connection and try again."; }
   $("joinBtn").disabled=false; render();
 });
-
-const RESET={turn:0,card:null,revealed:false,used:[],bingo:null,drawnAt:0,marks:null};
 
 /* ---- digital cards ---- */
 const LINES=[]; for(let r=0;r<5;r++){LINES.push([0,1,2,3,4].map(c=>r*5+c)); LINES.push([0,1,2,3,4].map(c=>c*5+r));}
@@ -571,35 +619,20 @@ function doneLines(card, marked){ if(!card) return []; marked=marked||{}; return
 function hasBingo(card, marked){ return doneLines(card, marked).length >= LINES_TO_WIN; }
 const cardKey = c => c.slice().sort((a,b)=>a-b).join(",");
 function randomCard(){ const n=[...Array(31)].map((_,i)=>i+1); for(let i=n.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[n[i],n[j]]=[n[j],n[i]];} return n.slice(0,25); }
-/* every board in the room gets a different set of 25 numbers */
-function newCard(taken){ const used=new Set(taken || players.filter(p=>p.card).map(p=>cardKey(p.card))); let c; do{ c=randomCard(); }while(used.has(cardKey(c))); return c; }
-function eligible(num){
-  const c=state.card; if(c===null||c===undefined||!BANK[c]||!state.revealed) return false;
-  const [n,,m]=BANK[c]; return m==="more" ? num>=n : num<=n;
+/* every board in the game gets a different set of 25 numbers */
+function newCard(){
+  const used=new Set(players.filter(p=>p.id!==uid && p.card && (p.round||0)===(settings.round||0)).map(p=>cardKey(p.card)));
+  let c; do{ c=randomCard(); }while(used.has(cardKey(c))); return c;
 }
-function timeUp(){ const secs=Number(state.timerSecs)||0; return secs>0 && !!state.drawnAt && serverNow() > state.drawnAt + secs*1000; }
 async function tapSquare(i){
-  if(!myId) return;
-  const c=state.card; if(c===null||c===undefined||!BANK[c]||state.revealed||amReader()||timeUp()) return;
-  const cur=(state.marks||{})[myId];
-  try{ await set(child(stateRef,"marks/"+myId), cur==="sq"+i ? null : "sq"+i); }
-  catch(e){ $("cardMsg").textContent="Couldn't save your pick. Try again."; }
+  if(!hasCard()||state.revealed||amReader()||timeUp()) return;
+  setPick(pickOf(uid)==="sq"+i ? null : "sq"+i);
 }
-/* a player's red squares stay until it's their turn to read again */
-async function clearMissesFor(pl){
-  if(!pl || !pl.misses || !Object.keys(pl.misses).length) return;
-  try{ await update(playersRef, {[pl.id+"/misses"]: null, [pl.id+"/miss"]: null}); }catch(e){}
+async function newGame(){
+  if(!isHost()) return;
+  await saveState({...STATE0, used:null, bingo:null, card:null});
+  await saveSettings({round:serverNow()});     // every phone deals itself a fresh card
 }
-async function dealCards(all){
-  const patch={}, taken=new Set(all ? [] : players.filter(p=>p.card).map(p=>cardKey(p.card)));
-  players.forEach(pl=>{ if(all || !pl.card){ const c=newCard(taken); taken.add(cardKey(c)); patch[pl.id+"/card"]=c; patch[pl.id+"/marked"]=null; patch[pl.id+"/miss"]=null; patch[pl.id+"/misses"]=null; } });
-  if(Object.keys(patch).length) await update(playersRef, patch);
-}
-$("cardSeg").addEventListener("click", async e=>{
-  const b=e.target.closest("button[data-d]"); if(!b) return;
-  const on=b.dataset.d==="1"; await saveState({digital:on}); if(on) await dealCards(false);
-});
-async function newGame(){ await saveState(RESET); try{ await dealCards(true); }catch(e){} }
 
 /* ---- confetti ---- */
 let confettiFor=0;
@@ -623,11 +656,11 @@ function confetti(){
 }
 
 $("bingoBtn").onclick=()=>{
-  const me=players.find(x=>x.id===myId); if(!me) return;
-  if(state.digital && hasBingo(me.card, me.marked)) saveState({bingo:{name:me.name, at:serverNow(), confirmed:true, confirmedAt:serverNow(), digital:true}});
-  else saveState({bingo:{name:me.name, at:serverNow(), confirmed:false}});
+  const m0=me(); if(!m0) return;
+  if(settings.digital && hasBingo(m0.card, m0.marked)) saveState({bingo:{name:m0.name, at:serverNow(), confirmed:true, confirmedAt:serverNow(), digital:true}});
+  else saveState({bingo:{name:m0.name, at:serverNow(), confirmed:false}});
 };
-$("bingoOk").onclick=()=>{ if(state.bingo) saveState({bingo:Object.assign({}, state.bingo, {confirmed:true, confirmedAt:serverNow()})}); };
+$("bingoOk").onclick=()=>{ if(state.bingo) saveState({bingo:{...state.bingo, confirmed:true, confirmedAt:serverNow()}}); };
 $("bingoNo").onclick=()=>saveState({bingo:null});
 $("bingoKeep").onclick=()=>saveState({bingo:null});
 $("bingoNew").onclick=()=>newGame();
@@ -635,40 +668,93 @@ $("newGame").onclick=()=>{ $("newGame").hidden=true; $("newYes").hidden=false; $
 $("newNo").onclick=()=>{ $("newGame").hidden=false; $("newYes").hidden=true; $("newNo").hidden=true; };
 $("newYes").onclick=()=>{ $("newNo").onclick(); newGame(); };
 
-render();
-
+/* ---------- connecting: sign-in, lobby, rooms ---------- */
 const configured = !String(FIREBASE_CONFIG.apiKey).startsWith("PASTE");
-let stateRef, playersRef;
+let db, roomRef, stateRef, playersRef, picksRef, settingsRef, listeners=[];
+
+function showLobby(msg){
+  room=null; listeners.forEach(u=>u()); listeners=[]; ready=false;
+  $("game").hidden=true; $("lobby").hidden=false; $("lobbyMsg").textContent=msg||"";
+  $("status").textContent = uid ? "Signed in." : "Connecting…";
+}
+function inviteUrl(){ return location.origin+location.pathname+"#"+room; }
+
+async function enterRoom(code, fresh){
+  code=(code||"").toUpperCase().trim();
+  if(!CODE_RE.test(code)){ showLobby(code ? "That doesn't look like a game code. Codes are 6 letters and numbers." : ""); return; }
+  if(!fresh){
+    try{ const h=await get(ref(db,`rooms/${code}/host`)); if(!h.exists()){ store.set("tbq-room",""); if(location.hash) history.replaceState(null,"",location.pathname); showLobby("No game found with code "+code+"."); return; } }
+    catch(e){ showLobby("Couldn't check that code. Make sure Anonymous sign-in and the database rules are set up in Firebase."); return; }
+  }
+  listeners.forEach(u=>u()); listeners=[];
+  room=code; store.set("tbq-room",code);
+  if(location.hash.slice(1).toUpperCase()!==code) history.replaceState(null,"",location.pathname+"#"+code);
+  roomRef=ref(db,`rooms/${code}`);
+  stateRef=child(roomRef,"state"); playersRef=child(roomRef,"players"); picksRef=child(roomRef,"picks"); settingsRef=child(roomRef,"settings");
+  players=[]; state={...STATE0}; settings={...SETTINGS0}; picks={}; hostId=null; ready=false;
+  $("lobby").hidden=true; $("game").hidden=false; $("roomCode").textContent=code; $("shareMsg").hidden=true;
+  let got=0; const need=5;
+  const timer=setTimeout(()=>{ $("status").textContent="Can't reach the game yet. Check your connection."; },10000);
+  const done=()=>{ if(++got===need){ clearTimeout(timer); ready=true; $("status").textContent="Live. Every phone updates automatically."; render(); syncMe(); } };
+  const fail=()=>{ clearTimeout(timer); $("status").textContent="Can't read the game. Check Anonymous sign-in and the database rules in Firebase."; };
+  const on=(r,fn)=>{ let first=true; listeners.push(onValue(r, s=>{ fn(s.val()); if(first){ first=false; done(); } else render(); syncMe(); }, fail)); };
+  on(child(roomRef,"host"), v=>{ hostId=v; });
+  on(settingsRef, v=>{ settings={...SETTINGS0, ...(v||{})}; });
+  on(stateRef, v=>{ state={...STATE0, ...(v||{})}; if(!Array.isArray(state.used)) state.used=Object.values(state.used||{}); });
+  on(playersRef, v=>{
+    players = Object.entries(v||{}).map(([id,d])=>{
+      let card = d.card ? (Array.isArray(d.card) ? d.card : Object.values(d.card)).map(Number) : null;
+      if(card && card.length!==25) card=null;
+      return {id, name:String(d.name||""), at:Number(d.at)||0, card, round:Number(d.round)||0, scored:d.scored, marked:d.marked||{}, misses:d.misses||{}};
+    });
+  });
+  on(picksRef, v=>{ picks=v||{}; });
+  render();
+}
+
+$("createBtn").onclick=async()=>{
+  if(!uid) return;
+  $("createBtn").disabled=true; $("lobbyMsg").textContent="";
+  for(let t=0;t<5;t++){
+    const code=genCode();
+    try{
+      await update(ref(db,`rooms/${code}`), {host:uid, created:serverNow()});
+      await set(ref(db,`rooms/${code}/settings`), {...SETTINGS0, round:serverNow()});
+      $("createBtn").disabled=false; enterRoom(code, true); return;
+    }catch(e){ /* code taken or rules not set: try another */ }
+  }
+  $("createBtn").disabled=false;
+  $("lobbyMsg").textContent="Couldn't start a game. Make sure Anonymous sign-in is on and the database rules are published in Firebase.";
+};
+$("codeForm").addEventListener("submit", e=>{ e.preventDefault(); enterRoom($("codeIn").value); });
+$("codeIn").addEventListener("input", e=>{ e.target.value=e.target.value.toUpperCase().replace(/[^A-Z0-9]/g,""); });
+$("switchBtn").onclick=()=>{ store.set("tbq-room",""); history.replaceState(null,"",location.pathname); showLobby(); };
+$("shareBtn").onclick=async()=>{
+  const url=inviteUrl(), text="Join our Trivia Bingo game! Code: "+room;
+  try{ if(navigator.share){ await navigator.share({title:"Trivia Bingo", text, url}); return; } }catch(e){ if(e && e.name==="AbortError") return; }
+  const sm=$("shareMsg"); sm.hidden=false;
+  try{ await navigator.clipboard.writeText(url); sm.textContent="Invite link copied: "+url; }
+  catch(e){ sm.textContent="Invite link: "+url; }
+};
+addEventListener("hashchange", ()=>{ const h=location.hash.slice(1).toUpperCase(); if(uid && h && h!==room) enterRoom(h); });
+
+render();
 if(!configured){
-  $("setup").hidden=false; $("status").textContent="Not connected yet."; $("join").hidden=true;
+  $("setup").hidden=false; $("status").textContent="Not connected yet.";
 } else {
   const app = initializeApp(FIREBASE_CONFIG);
-  const db = getDatabase(app);
-  stateRef = ref(db, `rooms/${ROOM}/state`);
-  playersRef = ref(db, `rooms/${ROOM}/players`);
-  let gotP=false, gotS=false;
-  const timer=setTimeout(()=>{ $("status").textContent="Can't reach the game yet. Check your connection."; },10000);
-  const done=()=>{ if(gotP&&gotS){ clearTimeout(timer); ready=true; $("status").textContent="Live. Every phone updates automatically."; } };
-  onValue(playersRef, snap=>{
-    const v = snap.val() || {};
-    players = Object.entries(v).map(([id,d])=>{
-      let card = d.card ? (Array.isArray(d.card) ? d.card : Object.values(d.card)).map(Number) : null;
-      if(card && (card.length!==25 || card.includes(0))) card=null;
-      return {id, name:String(d.name||""), at:Number(d.at)||0, card, marked:d.marked||{}, misses:d.misses||{}};
-    });
-    const meNow = players.find(x=>x.id===myId);
-    if(state.digital && meNow && !meNow.card) update(playersRef, {[myId+"/card"]: newCard(), [myId+"/marked"]: null}).catch(()=>{});
-    if(myId && !players.some(x=>x.id===myId)){ myId=null; store.set("tbq-player",""); }
-    render(); gotP=true; done();
-  }, ()=>{ clearTimeout(timer); $("status").textContent="Can't read the game. Check the database rules in Firebase."; });
-  onValue(stateRef, snap=>{
-    const v = snap.val() || {};
-    state = Object.assign({turn:0,card:null,revealed:false,used:[],bingo:null,timerSecs:0,drawnAt:0,marks:null,digital:false}, v);
-    if(!Array.isArray(state.used)) state.used = Object.values(state.used||{});
-    render(); gotS=true; done();
-  }, ()=>{ clearTimeout(timer); $("status").textContent="Can't read the game. Check the database rules in Firebase."; });
+  db = getDatabase(app);
+  const auth = getAuth(app);
   onValue(ref(db, ".info/serverTimeOffset"), s=>{ serverOffset = Number(s.val())||0; });
   onValue(ref(db, ".info/connected"), s=>{ if(ready) $("status").textContent = s.val() ? "Live. Every phone updates automatically." : "Reconnecting…"; });
+  let started=false;
+  onAuthStateChanged(auth, u=>{
+    if(!u || started) return;
+    started=true; uid=u.uid;
+    const start=(location.hash.slice(1)||store.get("tbq-room")||"").toUpperCase();
+    if(start) enterRoom(start); else showLobby();
+  });
+  signInAnonymously(auth).catch(()=>{ $("lobby").hidden=false; $("status").textContent="Couldn't sign in. Turn on Anonymous sign-in in Firebase (Authentication → Sign-in method)."; });
 }
 </script>
 </body>
