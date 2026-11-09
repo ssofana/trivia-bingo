@@ -42,6 +42,7 @@ Every card has a direction. For **19 or less**, any number from 1 to 19 is corre
 |---|---|---|
 | **Timer** | Off / 15s / 30s / 60s | Countdown from when a card is drawn. Beeps at zero and locks picks. |
 | **Cards** | Paper / Digital | **Paper** works with the physical boards. **Digital** gives each player a 5×5 card on their phone. |
+| **Question** | Rectangle / Circle | Shape of the question card. **Rectangle** is compact on phones; **Circle** looks like the board game's round cards. |
 | **Start game** | – | Starts play with a fresh deck, turns and cards. |
 | **Remove** | – | Removes a player from the reading order (lobby only). |
 
@@ -126,7 +127,7 @@ The Firebase settings in `index.html` are meant to be public. The rules are what
 ```
 rooms/<CODE>/
   host        uid of the person who created the game
-  settings    timerSecs, digital, round, phase    (host only)
+  settings    timerSecs, digital, round, phase, shape    (host only)
   state       turn, card, revealed, revealedAt, used, bingo   (players in the game)
   players/<uid>  name, at, card, marked, misses, bonus   (that player, or the host)
   picks/<uid>    the player's pick for the current question  (that player)

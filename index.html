@@ -83,6 +83,17 @@ button:disabled{opacity:.45;cursor:default}
 .arrow svg{width:100%;height:100%;display:block}
 .qempty{color:#6c6790;font-size:15px;padding:10px 0 4px}
 .qempty strong{display:block;color:var(--ink);font-size:18px;margin-bottom:4px}
+/* circle variant (host setting): the original round disc */
+.qcard.round{width:min(100%,340px);aspect-ratio:1;border-radius:50%;padding:12px}
+.qcard.round .face{position:relative;width:100%;height:100%;box-sizing:border-box;border-radius:50%;background:radial-gradient(circle at 50% 30%,var(--face) 45%,var(--face2) 100%);justify-content:center;gap:10px;padding:0 13% 26%}
+.qcard.round .band{position:absolute;left:0;right:0;bottom:0;height:27%;margin:0;padding:0;background:none;border-radius:0}
+.qcard.round .band::before{content:"";position:absolute;inset:0 -10% -60%;background:var(--rim);border-radius:50% 50% 0 0/38% 38% 0 0}
+.qcard.round .bnum{position:relative;font-size:clamp(30px,10vw,44px);padding-top:6px}
+.qcard.round .arrow{position:relative;width:26px;height:34px;padding-top:6px}
+.qcard.round .qtext{font-size:clamp(17px,5.4vw,23px)}
+.qcard.round .rule{width:78%}
+.qcard.round .mod{font-size:clamp(17px,5vw,22px)}
+.qcard.round .qempty{padding-top:12%}
 /* results screen */
 .results{width:100%;max-width:460px;box-sizing:border-box;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
 .results h3{margin:0;font-family:var(--display);font-weight:400;font-size:16px}
@@ -207,6 +218,9 @@ li.cur .num{background:var(--ball);border-color:var(--ball);color:var(--ball-ink
       </div>
       <div class="setrow seg" id="cardSeg"><span class="lbl">Cards</span>
         <button type="button" data-d="0">Paper</button><button type="button" data-d="1">Digital</button>
+      </div>
+      <div class="setrow seg" id="shapeSeg"><span class="lbl">Question</span>
+        <button type="button" data-c="rect">Rectangle</button><button type="button" data-c="circle">Circle</button>
       </div>
       <button class="big" id="startBtn" type="button">Start game</button>
     </section>
@@ -409,7 +423,7 @@ const store={get(k){try{return localStorage.getItem(k)}catch(e){return null}},se
 
 /* ---------- game state (mirrors the database) ---------- */
 const STATE0={turn:0,card:null,revealed:false,revealedAt:0,used:[],bingo:null,drawnAt:0};
-const SETTINGS0={timerSecs:0,digital:false,round:0,phase:"lobby"};
+const SETTINGS0={timerSecs:0,digital:false,round:0,phase:"lobby",shape:"rect"};
 let uid=null, room=null, hostId=null, ready=false, serverOffset=0;
 let players=[], state={...STATE0}, settings={...SETTINGS0}, picks={};
 const serverNow=()=>Date.now()+serverOffset;
@@ -455,6 +469,9 @@ function render(){
   $("hostNote").textContent = !live && isHost() ? "You're the host: only you can change settings, start the game or remove players." : "";
   document.querySelectorAll("#timerSeg button").forEach(b=>b.classList.toggle("on", Number(b.dataset.s)===(Number(settings.timerSecs)||0)));
   document.querySelectorAll("#cardSeg button").forEach(b=>b.classList.toggle("on", (b.dataset.d==="1")===digital));
+  const shape = settings.shape==="circle" ? "circle" : "rect";
+  document.querySelectorAll("#shapeSeg button").forEach(b=>b.classList.toggle("on", b.dataset.c===shape));
+  $("qcard").classList.toggle("round", shape==="circle");
   // ----- lobby player list -----
   const ol=$("players"); ol.replaceChildren();
   p.forEach((pl,i)=>{
@@ -635,6 +652,7 @@ async function setPick(v){
 }
 $("markYes").onclick=()=>setPick(pickOf(uid)==="yes" ? null : "yes");
 $("timerSeg").addEventListener("click", e=>{ const b=e.target.closest("button[data-s]"); if(b) saveSettings({timerSecs:Number(b.dataset.s)}); });
+$("shapeSeg").addEventListener("click", e=>{ const b=e.target.closest("button[data-c]"); if(b) saveSettings({shape:b.dataset.c}); });
 $("cardSeg").addEventListener("click", e=>{ const b=e.target.closest("button[data-d]"); if(b) saveSettings({digital:b.dataset.d==="1"}); });
 
 /* countdown */
