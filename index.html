@@ -71,6 +71,7 @@ button:disabled{opacity:.45;cursor:default}
 .face{position:relative;width:100%;height:100%;border-radius:50%;overflow:hidden;background:radial-gradient(circle at 50% 30%,var(--face) 45%,var(--face2) 100%);
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:0 13% 26%;box-sizing:border-box;text-align:center;color:var(--ink)}
 .qtext{font-size:clamp(17px,5.4vw,23px);font-weight:600;line-height:1.2;text-wrap:balance;color:var(--ink)}
+.qcat{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#6c6790;margin-bottom:-4px}
 .rule{width:78%;height:2px;background:var(--red)}
 .mod{font-weight:800;font-size:clamp(17px,5vw,22px);color:var(--red)}
 .mod.more{color:var(--grn)}
@@ -118,6 +119,17 @@ li.cur .num{background:var(--ball);border-color:var(--ball);color:var(--ball-ink
 .seg span{font-size:13px;color:var(--muted);margin-right:4px}
 .seg button{background:transparent;border:1.5px solid var(--line);color:var(--muted);padding:6px 10px;font-size:13px;font-weight:700;border-radius:999px}
 .seg button.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+/* digital 5x5 card */
+.grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.sq{aspect-ratio:1;max-width:100%;border-radius:12px;background:var(--bg);border:1.5px solid var(--line);color:var(--fg);font-weight:800;font-size:clamp(16px,5.4vw,22px);font-variant-numeric:tabular-nums;padding:0;display:grid;place-items:center}
+.sq:disabled{cursor:default;opacity:1}
+.sq.on{background:var(--ball);border-color:var(--ball);color:var(--ball-ink);border-radius:50%}
+.sq.can{border:2.5px solid var(--more);color:var(--more);background:var(--card)}
+.sq.cur{outline:3px solid var(--up-line);outline-offset:2px}
+.sq.win{background:var(--up-line);border-color:var(--up-line);color:#1d1838}
+@media (prefers-reduced-motion:no-preference){.sq.can{animation:glow 1.4s ease-in-out infinite}@keyframes glow{50%{box-shadow:0 0 0 4px color-mix(in srgb,var(--more) 25%,transparent)}}}
+.cardhead{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+#confetti{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:50}
 .setup{background:var(--up);border:2px solid var(--up-line);border-radius:14px;padding:14px;font-size:15px}
 .setup code{font-size:14px}
 </style>
@@ -146,6 +158,7 @@ li.cur .num{background:var(--ball);border-color:var(--ball);color:var(--ball-ink
   <section class="qcard" id="qcard" aria-live="polite">
     <div class="face">
       <div class="qempty" id="qempty"><strong>No card drawn</strong>Join below, then the first reader taps “Draw a question”.</div>
+      <div class="qcat" id="qcat" hidden></div>
       <div class="qtext" id="qtext" hidden></div>
       <div class="rule" id="rule" hidden></div>
       <div class="mod" id="mod" hidden></div>
@@ -167,6 +180,12 @@ li.cur .num{background:var(--ball);border-color:var(--ball);color:var(--ball-ink
   <section class="panel" id="markBox" hidden>
     <button class="mark-yes" id="markYes" type="button">Number pressed</button>
     <div class="msg" id="markSum"></div>
+  </section>
+
+  <section class="panel" id="cardBox" hidden>
+    <div class="cardhead"><h2>Your card</h2><span class="legend" id="cardCount" style="font-size:13px;color:var(--muted)"></span></div>
+    <div class="grid" id="grid"></div>
+    <div class="msg" id="cardMsg"></div>
   </section>
 
   <div class="bingoBanner" id="bingoBanner" hidden>
@@ -200,8 +219,11 @@ li.cur .num{background:var(--ball);border-color:var(--ball);color:var(--ball-ink
     <div class="seg" id="timerSeg"><span>Timer</span>
       <button type="button" data-s="0">Off</button><button type="button" data-s="15">15s</button><button type="button" data-s="30">30s</button><button type="button" data-s="60">60s</button>
     </div>
+    <div class="seg" id="cardSeg"><span>Cards</span>
+      <button type="button" data-d="0">Paper</button><button type="button" data-d="1">Digital</button>
+    </div>
     <button class="ghost" id="newGame" type="button">New game</button>
-    <button class="warn" id="newYes" type="button" hidden>Yes, reshuffle deck and reset turns</button>
+    <button class="warn" id="newYes" type="button" hidden>Yes, reshuffle and start over</button>
     <button class="ghost" id="newNo" type="button" hidden>Cancel</button>
   </div>
   <p class="note" id="status">Connecting…</p>
@@ -228,106 +250,106 @@ const ROOM = "family";
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getDatabase, ref, child, set, update, push, remove, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-/* Question bank: [answer, question, modifier] — "more" = that number or higher, "less" = that number or lower */
+/* Question bank: [answer, question, modifier, category] — "more" = that number or higher, "less" = that number or lower */
 const BANK = [
- [1, "The number of moons orbiting Earth", "more"],
- [1, "The number of humps on a dromedary camel", "more"],
- [1, "The number of players in a game of solitaire", "more"],
- [2, "The number of wheels on a bicycle", "more"],
- [2, "The number of kidneys in the human body", "less"],
- [2, "The number of performers in a duet", "more"],
- [3, "The number of hearts in an octopus", "less"],
- [3, "The number of strikes for a strikeout in baseball", "more"],
- [3, "The number of sides on a triangle", "less"],
- [4, "The number of chambers in the human heart", "more"],
- [4, "The number of members of the Beatles", "less"],
- [4, "The number of suits in a deck of cards", "more"],
- [5, "The number of players per team on a basketball court", "less"],
- [5, "The number of rings on the Olympic flag", "more"],
- [5, "The number of Great Lakes", "less"],
- [6, "The number of legs on an insect", "more"],
- [6, "The number of faces on a cube", "less"],
- [6, "The number of strings on a standard guitar", "more"],
- [7, "The number of continents", "less"],
- [7, "The number of colours in a rainbow", "more"],
- [7, "The number of days in a week", "less"],
- [8, "The number of legs on a spider", "more"],
- [8, "The number of planets in our solar system", "less"],
- [8, "The number of sides on a stop sign", "more"],
- [9, "The number of innings in a regulation baseball game", "less"],
- [9, "The number of lives a cat is said to have", "more"],
- [9, "The number of squares in a tic-tac-toe grid", "less"],
- [10, "The number of pins in ten-pin bowling", "more"],
- [10, "The number of provinces in Canada", "less"],
- [10, "The number of years in a decade", "more"],
- [11, "The number of players per side on a soccer field", "less"],
- [11, "The number of players on a cricket team", "more"],
- [11, "The number of players per side on the field in American football", "less"],
- [12, "The number of months in a year", "more"],
- [12, "The number of signs of the zodiac", "less"],
- [12, "The number of players per side on the field in Canadian football", "more"],
- [13, "The number of items in a baker's dozen", "less"],
- [13, "The number of stripes on the US flag", "more"],
- [13, "The number of cards in each suit of a deck", "less"],
- [14, "The number of days in a fortnight", "more"],
- [14, "The number of lines in a sonnet", "less"],
- [14, "The number of pounds in a stone", "more"],
- [15, "The number of players on a rugby union team", "less"],
- [15, "The number of minutes in a quarter hour", "more"],
- [15, "The number of red balls in a game of snooker", "less"],
- [16, "The number of ounces in a pound", "more"],
- [16, "The number of pieces each player starts with in chess", "less"],
- [16, "The number of pawns on a chessboard at the start of a game", "more"],
- [17, "The number of syllables in a haiku", "less"],
- [17, "The number of years some periodical cicadas spend underground", "more"],
- [17, "The total a blackjack dealer must stand on", "less"],
- [18, "The age you can vote in a Canadian federal election", "more"],
- [18, "The number of wheels on a big-rig truck", "less"],
- [18, "The number of players per side on the field in Australian rules football", "more"],
- [19, "The legal drinking age in Ontario", "less"],
- [19, "The number of the US amendment that gave women the vote", "more"],
- [19, "The number in “COVID-___”", "less"],
- [20, "The number of baby teeth in a full set", "more"],
- [20, "The number of faces on an icosahedron", "less"],
- [20, "The number of years in two decades", "more"],
- [21, "The number of guns in a royal salute", "less"],
- [21, "The target score in blackjack", "more"],
- [21, "The total number of dots on a standard die", "less"],
- [22, "The number of players on a soccer field during a match", "more"],
- [22, "The number of yards in a cricket pitch", "less"],
- [22, "The number in the title “Catch-___”", "more"],
- [23, "The number of pairs of chromosomes in a human cell", "less"],
- [23, "Michael Jordan's jersey number with the Bulls", "more"],
- [23, "The Psalm that begins “The Lord is my shepherd”", "less"],
- [24, "The number of hours in a day", "more"],
- [24, "The number of karats in pure gold", "less"],
- [24, "The number of blackbirds baked in a pie in the nursery rhyme", "more"],
- [25, "The number of cents in a quarter", "less"],
- [25, "The number of squares on a standard bingo card", "more"],
- [25, "The December date of Christmas Day", "less"],
- [26, "The number of letters in the English alphabet", "more"],
- [26, "The number of full miles in a marathon", "less"],
- [26, "The December date of Boxing Day", "more"],
- [27, "The number of bones in the human hand", "less"],
- [27, "The number of amendments to the US Constitution", "more"],
- [27, "The number of small cubes making up a 3×3×3 cube", "less"],
- [28, "The number of days in February in a non-leap year", "more"],
- [28, "The number of dominoes in a double-six set", "less"],
- [28, "The number of grams in an ounce, rounded down", "more"],
- [29, "The number of days in February in a leap year", "less"],
- [29, "The highest possible hand score in cribbage", "more"],
- [29, "The number of whole days in a lunar month", "less"],
- [30, "The number of days in September", "more"],
- [30, "The number of years in a pearl anniversary", "less"],
- [30, "The number of days in April", "more"],
- [31, "The number of days in January", "less"],
- [31, "The October date of Halloween", "less"],
- [31, "The number of days in December", "less"]
+ [1, "The only positive whole number that is neither prime nor composite", "more", "Math"],
+ [1, "The number of countries that border Portugal", "more", "Geography"],
+ [1, "The number of US presidents who have resigned from office", "more", "History"],
+ [2, "The number of landlocked countries in South America", "less", "Geography"],
+ [2, "The number of Best Actor Oscars won by Tom Hanks", "more", "Movies"],
+ [2, "The only even prime number", "less", "Math"],
+ [3, "The number of singers in Destiny's Child's best-known lineup", "more", "Pop culture"],
+ [3, "The number of oceans that touch Canada's coastline", "less", "Geography"],
+ [3, "The number of ships Columbus sailed with in 1492", "more", "History"],
+ [4, "The square root of 16", "less", "Math"],
+ [4, "The number of houses at Hogwarts", "more", "Movies"],
+ [4, "The number of countries that make up the United Kingdom", "less", "Geography"],
+ [5, "The number of permanent members of the UN Security Council", "more", "History"],
+ [5, "The number of Platonic solids", "less", "Math"],
+ [5, "The number of members in One Direction when the band formed", "more", "Pop culture"],
+ [6, "The number of Infinity Stones in the Marvel movies", "less", "Movies"],
+ [6, "The number of wives Henry VIII had", "more", "History"],
+ [6, "The smallest perfect number", "less", "Math"],
+ [7, "The number of countries in Central America", "more", "Geography"],
+ [7, "The number of members in BTS", "less", "Pop culture"],
+ [7, "The number of books in the main Harry Potter series", "more", "Movies"],
+ [8, "The number of years Barack Obama served as president", "less", "History"],
+ [8, "The cube root of 512", "more", "Math"],
+ [8, "The number of films in the main Harry Potter film series", "less", "Movies"],
+ [9, "The number of films in the Star Wars Skywalker saga", "more", "Movies"],
+ [9, "The number of provinces in South Africa", "less", "Geography"],
+ [9, "The number of zeros in one billion", "more", "Math"],
+ [10, "The number of amendments in the US Bill of Rights", "less", "History"],
+ [10, "The number of seasons of Friends", "more", "Pop culture"],
+ [10, "The number of edges on a pentagonal pyramid", "more", "Math"],
+ [11, "The month (as a number) when the WWI armistice was signed", "less", "History"],
+ [11, "The number of Oscars won by Titanic", "more", "Movies"],
+ [11, "The smallest two-digit prime number", "less", "Math"],
+ [12, "The number of people who have walked on the Moon", "more", "History"],
+ [12, "The number of edges on a cube", "less", "Math"],
+ [12, "The number of countries in South America", "more", "Geography"],
+ [13, "The number of provinces and territories in Canada", "less", "Geography"],
+ [13, "The Fibonacci number that comes right after 8", "more", "Math"],
+ [13, "Taylor Swift's famous lucky number", "less", "Pop culture"],
+ [14, "The regnal number of France's “Sun King” Louis", "more", "History"],
+ [14, "The number of mountains on Earth taller than 8,000 metres", "less", "Geography"],
+ [14, "The lowest common multiple of 2 and 7", "more", "Math"],
+ [15, "The number of republics in the former Soviet Union", "more", "History"],
+ [15, "The fifth triangular number", "less", "Math"],
+ [15, "The minutes of fame Andy Warhol said everyone would get", "more", "Pop culture"],
+ [16, "Abraham Lincoln's number in the order of US presidents", "less", "History"],
+ [16, "2 to the power of 4", "more", "Math"],
+ [16, "The number of states in Germany", "less", "Geography"],
+ [17, "The 7th prime number", "more", "Math"],
+ [17, "The number of autonomous communities in Spain", "less", "Geography"],
+ [17, "The century in which the Mayflower sailed to America", "more", "History"],
+ [18, "The number of the US amendment that started Prohibition", "less", "History"],
+ [18, "The number of edges on a hexagonal prism", "more", "Math"],
+ [18, "The number of regions in France, including overseas", "less", "Geography"],
+ [19, "The century in which Canadian Confederation happened", "more", "History"],
+ [19, "The 8th prime number", "less", "Math"],
+ [19, "The title of Adele's debut album", "more", "Pop culture"],
+ [20, "The number of faces on an icosahedron", "less", "Math"],
+ [20, "The number of regions in Italy", "more", "Geography"],
+ [20, "Thousands of leagues in the title of Jules Verne's undersea novel", "less", "Books"],
+ [21, "The title of Adele's second album", "more", "Pop culture"],
+ [21, "The 8th number in the Fibonacci sequence (1, 1, 2, 3…)", "less", "Math"],
+ [21, "The century we are living in now", "more", "History"],
+ [22, "The number of the US amendment limiting presidents to two terms", "less", "History"],
+ [22, "The Taylor Swift song about “feeling” this age", "more", "Pop culture"],
+ [22, "The top number of the fraction often used for pi, __/7", "more", "Math"],
+ [23, "The smallest prime number greater than 20", "less", "Math"],
+ [23, "The number in the title of Jim Carrey's 2007 thriller “The Number __”", "more", "Movies"],
+ [23, "The number of provinces in Argentina", "less", "Geography"],
+ [24, "The standard frames per second of cinema film", "more", "Movies"],
+ [24, "4 factorial (4!)", "less", "Math"],
+ [24, "The title of the Kiefer Sutherland show where each season covers one day", "more", "Pop culture"],
+ [25, "Queen Elizabeth II's age when she became queen", "less", "History"],
+ [25, "The sum of the first five odd numbers", "more", "Math"],
+ [25, "The title of Adele's third album", "less", "Pop culture"],
+ [26, "The number of cantons in Switzerland", "more", "Geography"],
+ [26, "The only number sitting between a perfect square and a perfect cube", "less", "Math"],
+ [26, "The number of full miles in a marathon", "more", "Sports"],
+ [27, "The number of years Nelson Mandela spent in prison", "less", "History"],
+ [27, "3 cubed", "more", "Math"],
+ [27, "The number of countries in the European Union", "more", "Geography"],
+ [28, "The second perfect number", "less", "Math"],
+ [28, "The Sandra Bullock rehab movie “__ Days”", "more", "Movies"],
+ [28, "The number of countries in the EU just before Brexit", "less", "History"],
+ [29, "The 10th prime number", "more", "Math"],
+ [29, "Mount Everest's height in thousands of feet, rounded down", "less", "Geography"],
+ [29, "The number of days in February 2024", "more", "History"],
+ [30, "The title of Adele's fourth album", "less", "Pop culture"],
+ [30, "The number of edges on a dodecahedron", "more", "Math"],
+ [30, "Jennifer Garner's “13 Going on __”", "less", "Movies"],
+ [31, "The 11th prime number", "less", "Math"],
+ [31, "The number of states in Mexico, not counting Mexico City", "less", "Geography"],
+ [31, "The number of flavours Baskin-Robbins is famous for", "less", "Pop culture"]
 ];
 
 const $=id=>document.getElementById(id);
 const store={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
-let ready=false, players=[], state={turn:0,card:null,revealed:false,used:[],bingo:null,timerSecs:0,drawnAt:0,marks:null}, canWrite=true, serverOffset=0;
+let ready=false, players=[], state={turn:0,card:null,revealed:false,used:[],bingo:null,timerSecs:0,drawnAt:0,marks:null,digital:false}, canWrite=true, serverOffset=0;
 const serverNow=()=>Date.now()+serverOffset;
 $("name").value = store.get("tbq-name")||"";
 let myId = store.get("tbq-player");
@@ -339,22 +361,22 @@ function amReader(){ const r=reader(); return !!r && (r.id===myId); }
 
 
 function render(){
-  const p=ordered(), r=reader(), nx=nextReader(), mine=amReader();
+  const p=ordered(), r=reader(), nx=nextReader(), mine=amReader(), digital=!!state.digital;
   // turn banner
   $("turnBox").hidden = !r;
   if(r){ $("readerName").textContent = r.name + (mine?" (you)":""); $("nextName").textContent = nx? "Up next: "+nx.name : ""; }
   // card
   const c = state.card, has = c!==null && c!==undefined && BANK[c];
   const showAns = has && (mine || state.revealed);
-  $("qempty").hidden = !!has; $("qtext").hidden = !has;
+  $("qempty").hidden = !!has; $("qtext").hidden = !has; $("qcat").hidden = !has;
   $("rule").hidden = !showAns; $("mod").hidden = !showAns;
   $("arrow").hidden = !showAns;
   $("bnum").textContent = showAns ? BANK[c][0] : "?";
   $("qcount").textContent = has ? "Card " + (state.used||[]).length + " of " + BANK.length : "";
   $("qhint").textContent = !has ? "" : state.revealed ? "· Answer revealed" : mine ? "· Only you can see the answer" : "· Answer hidden until revealed";
   if(has){
-    const [n,q,m] = BANK[c];
-    $("qtext").textContent = q;
+    const [n,q,m,cat] = BANK[c];
+    $("qtext").textContent = q; $("qcat").textContent = cat||"";
     const mod=$("mod"); mod.className="mod "+m; mod.textContent = m==="more" ? "or more" : "or less";
     $("arrow").innerHTML = m==="more"
       ? '<svg viewBox="0 0 26 34"><path d="M13 0 L26 14 H17 V34 H9 V14 H0 Z" fill="#3fbf6e"/></svg>'
@@ -374,23 +396,58 @@ function render(){
   const marks = state.marks || {};
   const meP = p.find(x=>x.id===myId);
   const markOpen = has && state.revealed;
-  $("markBox").hidden = !markOpen || !meP;
+  $("markBox").hidden = !markOpen || !meP || digital;
   if(markOpen){
     const pressed = marks[myId]==="yes";
     $("markYes").classList.toggle("sel", pressed);
     $("markYes").textContent = pressed ? "Number pressed \u2713  (tap to undo)" : "Number pressed";
-    const yes = p.filter(x=>marks[x.id]==="yes").map(x=>x.name);
+    const yes = p.filter(x=>marks[x.id]).map(x=>x.name);
     $("markSum").textContent = yes.length ? "Pressed: "+yes.join(", ") : "Tap if you put a number on your card.";
   }
   // bingo
   const me = p.find(x=>x.id===myId);
   const bg = state.bingo;
-  $("bingoBtn").hidden = !(me && canWrite) || !!bg;
+  // digital card
+  document.querySelectorAll("#cardSeg button").forEach(b=>b.classList.toggle("on", (b.dataset.d==="1")===digital));
+  const myCard = digital && me && me.card ? me.card : null;
+  const lines = myCard ? doneLines(me.card, me.marked) : [];
+  const line = lines.length >= LINES_TO_WIN;
+  const winSet = new Set(lines.flat());
+  $("cardBox").hidden = !myCard;
+  if(myCard){
+    const cur = (state.marks||{})[myId];
+    const curIdx = typeof cur==="string" && cur.startsWith("sq") ? Number(cur.slice(2)) : -1;
+    const marked = me.marked||{};
+    const grid=$("grid"); grid.replaceChildren();
+    let canCount=0;
+    myCard.forEach((num,i)=>{
+      const b=document.createElement("button"); b.type="button"; b.className="sq"; b.id="sq"+i;
+      const on = !!marked[i];
+      const can = !on && eligible(num) && canWrite;
+      b.textContent=num;
+      if(on) b.classList.add("on");
+      if(winSet.has(i)) b.classList.add("win");
+      if(i===curIdx) b.classList.add("cur");
+      if(can){ b.classList.add("can"); canCount++; }
+      b.disabled = !(can || i===curIdx);
+      b.setAttribute("aria-label", num+(on?" marked":""));
+      b.onclick=()=>tapSquare(i);
+      grid.append(b);
+    });
+    $("cardCount").textContent = Object.keys(marked).length+" of 25 marked \u00b7 "+lines.length+" of "+LINES_TO_WIN+" lines";
+    $("cardMsg").textContent = line ? "Two lines! Tap BINGO." :
+      lines.length===1 && curIdx<0 && !(has && state.revealed) ? "One line done. One more for Bingo!" :
+      curIdx>=0 ? "Marked. Tap it again to undo, or tap another green square to move it." :
+      (has && state.revealed) ? (canCount ? "Got it right? Tap one green square to mark it." : "No open squares match this answer.") :
+      "When the answer is revealed, matching squares light up green.";
+  }
+  $("bingoBtn").hidden = !(me && canWrite) || !!bg || (digital && !line);
   $("bingoBanner").hidden = !bg;
   if(bg){
+    if(bg.confirmed && bg.confirmedAt && confettiFor!==bg.confirmedAt){ confettiFor=bg.confirmedAt; if(serverNow()-bg.confirmedAt < 20000) confetti(); }
     $("bingoTag").textContent = bg.confirmed ? "Winner" : "Bingo called";
     $("bingoWho").textContent = bg.confirmed ? bg.name+" wins!" : bg.name+" has Bingo!";
-    $("bingoSub").textContent = bg.confirmed ? "Nice game, everyone." : "Hold the next question while everyone checks their card.";
+    $("bingoSub").textContent = bg.confirmed ? (bg.digital ? "Two full lines on their card. Nice game, everyone." : "Nice game, everyone.") : "Hold the next question while everyone checks their card.";
     $("bingoCheck").hidden = !!bg.confirmed || !canWrite;
     $("bingoDone").hidden = !bg.confirmed || !canWrite;
   }
@@ -402,7 +459,7 @@ function render(){
     const nm=document.createElement("div"); nm.className="pname"; nm.textContent=pl.name;
     if(pl.id===myId){ const y=document.createElement("span"); y.className="you"; y.textContent="  · you"; nm.append(y); }
     li.append(n,nm);
-    if(markOpen && (state.marks||{})[pl.id]==="yes"){ const ch=document.createElement("span"); ch.className="chip yes"; ch.textContent="Pressed"; li.append(ch); }
+    if(markOpen && (state.marks||{})[pl.id]){ const ch=document.createElement("span"); ch.className="chip yes"; ch.textContent="Pressed"; li.append(ch); }
     if(canWrite){ const b=document.createElement("button"); b.className="ghost"; b.type="button"; b.textContent= pl.id===myId? "Leave":"Remove";
       b.onclick=()=>removePlayer(pl); li.append(b); }
     ol.append(li);
@@ -470,21 +527,84 @@ $("join").addEventListener("submit", async ev=>{
   $("joinBtn").disabled=true;
   try{
     const r = push(playersRef);
-    await set(r, {name, at:Date.now()});
+    await set(r, state.digital ? {name, at:Date.now(), card:newCard()} : {name, at:Date.now()});
     myId=r.key; store.set("tbq-player",myId); store.set("tbq-name",name); $("msg").textContent="You're in the reading order.";
   }catch(e){ $("msg").textContent = "Couldn't join. Check your connection and try again."; }
   $("joinBtn").disabled=false; render();
 });
 
 const RESET={turn:0,card:null,revealed:false,used:[],bingo:null,drawnAt:0,marks:null};
-$("bingoBtn").onclick=()=>{ const me=players.find(x=>x.id===myId); if(me) saveState({bingo:{name:me.name, at:Date.now(), confirmed:false}}); };
-$("bingoOk").onclick=()=>{ if(state.bingo) saveState({bingo:Object.assign({}, state.bingo, {confirmed:true})}); };
+
+/* ---- digital cards ---- */
+const LINES=[]; for(let r=0;r<5;r++){LINES.push([0,1,2,3,4].map(c=>r*5+c)); LINES.push([0,1,2,3,4].map(c=>c*5+r));}
+LINES.push([0,6,12,18,24],[4,8,12,16,20]);
+const LINES_TO_WIN = 2;
+function doneLines(card, marked){ if(!card) return []; marked=marked||{}; return LINES.filter(l=>l.every(i=>marked[i])); }
+function hasBingo(card, marked){ return doneLines(card, marked).length >= LINES_TO_WIN; }
+const cardKey = c => c.slice().sort((a,b)=>a-b).join(",");
+function randomCard(){ const n=[...Array(31)].map((_,i)=>i+1); for(let i=n.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[n[i],n[j]]=[n[j],n[i]];} return n.slice(0,25); }
+/* every board in the room gets a different set of 25 numbers */
+function newCard(taken){ const used=new Set(taken || players.filter(p=>p.card).map(p=>cardKey(p.card))); let c; do{ c=randomCard(); }while(used.has(cardKey(c))); return c; }
+function eligible(num){
+  const c=state.card; if(c===null||c===undefined||!BANK[c]||!state.revealed) return false;
+  const [n,,m]=BANK[c]; return m==="more" ? num>=n : num<=n;
+}
+async function tapSquare(i){
+  if(!myId) return;
+  const cur=(state.marks||{})[myId];
+  const curIdx = typeof cur==="string" && cur.startsWith("sq") ? Number(cur.slice(2)) : -1;
+  const patch={};
+  try{
+    if(i===curIdx){ patch[myId+"/marked/"+i]=null; await update(playersRef, patch); await set(child(stateRef,"marks/"+myId), null); return; }
+    if(curIdx>=0) patch[myId+"/marked/"+curIdx]=null;
+    patch[myId+"/marked/"+i]=true;
+    await update(playersRef, patch); await set(child(stateRef,"marks/"+myId), "sq"+i);
+  }catch(e){ $("cardMsg").textContent="Couldn't save that square. Try again."; }
+}
+async function dealCards(all){
+  const patch={}, taken=new Set(all ? [] : players.filter(p=>p.card).map(p=>cardKey(p.card)));
+  players.forEach(pl=>{ if(all || !pl.card){ const c=newCard(taken); taken.add(cardKey(c)); patch[pl.id+"/card"]=c; patch[pl.id+"/marked"]=null; } });
+  if(Object.keys(patch).length) await update(playersRef, patch);
+}
+$("cardSeg").addEventListener("click", async e=>{
+  const b=e.target.closest("button[data-d]"); if(!b) return;
+  const on=b.dataset.d==="1"; await saveState({digital:on}); if(on) await dealCards(false);
+});
+async function newGame(){ await saveState(RESET); try{ await dealCards(true); }catch(e){} }
+
+/* ---- confetti ---- */
+let confettiFor=0;
+function confetti(){
+  if(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const cv=document.createElement("canvas"); cv.id="confetti"; document.body.append(cv);
+  const ctx=cv.getContext("2d"), dpr=window.devicePixelRatio||1;
+  const W=()=>innerWidth, H=()=>innerHeight;
+  cv.width=W()*dpr; cv.height=H()*dpr; ctx.scale(dpr,dpr);
+  const cols=["#e2403a","#e9c64a","#3b37c9","#1f8a4c","#8e8bff","#ff8fb1"];
+  const bits=[...Array(170)].map(()=>({x:Math.random()*W(), y:-20-Math.random()*H()*0.6, w:6+Math.random()*7, h:8+Math.random()*10,
+    vx:(Math.random()-.5)*3, vy:2+Math.random()*3.5, r:Math.random()*6.28, vr:(Math.random()-.5)*.3, c:cols[(Math.random()*cols.length)|0], round:Math.random()<.3}));
+  const t0=performance.now();
+  (function frame(t){
+    const el=t-t0; ctx.clearRect(0,0,W(),H());
+    bits.forEach(b=>{ b.x+=b.vx+Math.sin((t+b.y)/300)*.6; b.y+=b.vy; b.vy+=0.03; b.r+=b.vr;
+      ctx.save(); ctx.translate(b.x,b.y); ctx.rotate(b.r); ctx.globalAlpha=Math.max(0,Math.min(1,(5200-el)/900)); ctx.fillStyle=b.c;
+      if(b.round){ctx.beginPath();ctx.arc(0,0,b.w/2,0,6.28);ctx.fill();} else ctx.fillRect(-b.w/2,-b.h/2,b.w,b.h); ctx.restore(); });
+    if(el<5200) requestAnimationFrame(frame); else cv.remove();
+  })(t0);
+}
+
+$("bingoBtn").onclick=()=>{
+  const me=players.find(x=>x.id===myId); if(!me) return;
+  if(state.digital && hasBingo(me.card, me.marked)) saveState({bingo:{name:me.name, at:serverNow(), confirmed:true, confirmedAt:serverNow(), digital:true}});
+  else saveState({bingo:{name:me.name, at:serverNow(), confirmed:false}});
+};
+$("bingoOk").onclick=()=>{ if(state.bingo) saveState({bingo:Object.assign({}, state.bingo, {confirmed:true, confirmedAt:serverNow()})}); };
 $("bingoNo").onclick=()=>saveState({bingo:null});
 $("bingoKeep").onclick=()=>saveState({bingo:null});
-$("bingoNew").onclick=()=>saveState(RESET);
+$("bingoNew").onclick=()=>newGame();
 $("newGame").onclick=()=>{ $("newGame").hidden=true; $("newYes").hidden=false; $("newNo").hidden=false; };
 $("newNo").onclick=()=>{ $("newGame").hidden=false; $("newYes").hidden=true; $("newNo").hidden=true; };
-$("newYes").onclick=()=>{ $("newNo").onclick(); saveState(RESET); };
+$("newYes").onclick=()=>{ $("newNo").onclick(); newGame(); };
 
 render();
 
@@ -502,13 +622,19 @@ if(!configured){
   const done=()=>{ if(gotP&&gotS){ clearTimeout(timer); ready=true; $("status").textContent="Live. Every phone updates automatically."; } };
   onValue(playersRef, snap=>{
     const v = snap.val() || {};
-    players = Object.entries(v).map(([id,d])=>({id, name:String(d.name||""), at:Number(d.at)||0}));
+    players = Object.entries(v).map(([id,d])=>{
+      let card = d.card ? (Array.isArray(d.card) ? d.card : Object.values(d.card)).map(Number) : null;
+      if(card && (card.length!==25 || card.includes(0))) card=null;
+      return {id, name:String(d.name||""), at:Number(d.at)||0, card, marked:d.marked||{}};
+    });
+    const meNow = players.find(x=>x.id===myId);
+    if(state.digital && meNow && !meNow.card) update(playersRef, {[myId+"/card"]: newCard(), [myId+"/marked"]: null}).catch(()=>{});
     if(myId && !players.some(x=>x.id===myId)){ myId=null; store.set("tbq-player",""); }
     render(); gotP=true; done();
   }, ()=>{ clearTimeout(timer); $("status").textContent="Can't read the game. Check the database rules in Firebase."; });
   onValue(stateRef, snap=>{
     const v = snap.val() || {};
-    state = Object.assign({turn:0,card:null,revealed:false,used:[],bingo:null,timerSecs:0,drawnAt:0,marks:null}, v);
+    state = Object.assign({turn:0,card:null,revealed:false,used:[],bingo:null,timerSecs:0,drawnAt:0,marks:null,digital:false}, v);
     if(!Array.isArray(state.used)) state.used = Object.values(state.used||{});
     render(); gotS=true; done();
   }, ()=>{ clearTimeout(timer); $("status").textContent="Can't read the game. Check the database rules in Firebase."; });
