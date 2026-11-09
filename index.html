@@ -66,25 +66,38 @@ button:disabled{opacity:.45;cursor:default}
 .turn .who{font-family:var(--display);font-size:22px;line-height:1.1;overflow-wrap:anywhere}
 .turn .next{font-size:14px;color:var(--muted)}
 
-/* question card: a round disc like the printed cards (light face in both themes, it's a physical object) */
-.qwrap{display:flex;flex-direction:column;align-items:center;gap:8px}
-.qcard{--rim:#2b2a8c;--face:#ffffff;--face2:#d6e8f8;--ink:#1d1838;--red:#d8443a;--grn:#1f8a4c;
-  position:relative;width:min(100%,340px);max-width:100%;aspect-ratio:1;border-radius:50%;background:var(--rim);padding:12px;box-sizing:border-box;
-  box-shadow:0 10px 24px rgba(20,16,60,.25)}
-.face{position:relative;width:100%;height:100%;border-radius:50%;overflow:hidden;background:radial-gradient(circle at 50% 30%,var(--face) 45%,var(--face2) 100%);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:0 13% 26%;box-sizing:border-box;text-align:center;color:var(--ink)}
-.qtext{font-size:clamp(17px,5.4vw,23px);font-weight:600;line-height:1.2;text-wrap:balance;color:var(--ink)}
-.qcat{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#6c6790;margin-bottom:-4px}
-.rule{width:78%;height:2px;background:var(--red)}
-.mod{font-weight:800;font-size:clamp(17px,5vw,22px);color:var(--red)}
+/* question card: compact rounded rectangle in the printed cards' colours (light face in both themes, it's a physical object) */
+.qwrap{display:flex;flex-direction:column;align-items:center;gap:10px}
+.qcard{--rim:#2b2a8c;--face:#ffffff;--face2:#e3eefa;--ink:#1d1838;--red:#d8443a;--grn:#1f8a4c;
+  width:100%;max-width:460px;border-radius:20px;background:var(--rim);padding:7px;box-sizing:border-box;box-shadow:0 8px 20px rgba(20,16,60,.22)}
+.face{border-radius:14px;overflow:hidden;background:linear-gradient(180deg,var(--face) 55%,var(--face2) 100%);
+  display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;padding:16px 18px 0;color:var(--ink)}
+.qtext{font-size:clamp(17px,4.8vw,21px);font-weight:700;line-height:1.25;text-wrap:balance;color:var(--ink)}
+.qcat{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#6c6790}
+.rule{width:60%;height:2px;background:var(--red)}
+.mod{font-weight:800;font-size:17px;color:var(--red)}
 .mod.more{color:var(--grn)}
-.band{position:absolute;left:0;right:0;bottom:0;height:27%;display:flex;align-items:center;justify-content:center;gap:6px;color:#fff}
-.band::before{content:"";position:absolute;inset:0 -10% -60%;background:var(--rim);border-radius:50% 50% 0 0/38% 38% 0 0}
-.bnum{position:relative;font-family:var(--display);font-size:clamp(30px,10vw,44px);line-height:1;padding-top:6px}
-.arrow{position:relative;width:26px;height:34px;padding-top:6px}
+.band{align-self:stretch;margin:8px -18px 0;padding:10px 0 12px;background:var(--rim);border-radius:50% 50% 0 0/16px 16px 0 0;display:flex;align-items:center;justify-content:center;gap:6px;color:#fff}
+.bnum{font-family:var(--display);font-size:34px;line-height:1}
+.arrow{width:20px;height:28px}
 .arrow svg{width:100%;height:100%;display:block}
-.qempty{color:#6c6790;font-size:15px;padding-top:12%}
-.qempty strong{display:block;color:var(--ink);font-size:19px;margin-bottom:4px}
+.qempty{color:#6c6790;font-size:15px;padding:10px 0 4px}
+.qempty strong{display:block;color:var(--ink);font-size:18px;margin-bottom:4px}
+/* results screen */
+.results{width:100%;max-width:460px;box-sizing:border-box;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.results h3{margin:0;font-family:var(--display);font-weight:400;font-size:16px}
+.rlist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.rlist li{display:flex;align-items:center;gap:10px;padding:0;border:0;background:none}
+.rlist .rname{flex:1;min-width:0;font-weight:700;overflow-wrap:anywhere}
+.rlist .rnum{font-family:var(--display);font-size:15px;color:var(--muted);font-variant-numeric:tabular-nums}
+.chip.exact{background:var(--up-line);color:#1d1838}
+.bonusbar{display:flex;align-items:center;gap:10px;background:var(--up);border:2px solid var(--up-line);border-radius:12px;padding:10px 12px;font-weight:800}
+.bonusbar .secs{margin-left:auto;font-family:var(--display);font-size:22px;font-variant-numeric:tabular-nums}
+.sq.open{border:2.5px dashed var(--up-line)}
+.stack{display:flex;flex-direction:column;gap:20px}
+.hostpanel h2{margin-bottom:2px}
+.setrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.setrow .lbl{min-width:64px;font-weight:700}
 .qmeta{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;font-size:13px;color:var(--muted);text-align:center}
 
 /* reader line */
@@ -175,6 +188,33 @@ li.cur .num{background:var(--ball);border-color:var(--ball);color:var(--ball-ink
   </div>
   <p class="msg" id="shareMsg" aria-live="polite" hidden></p>
 
+  <!-- LOBBY: players gather, host sets things up -->
+  <div class="stack" id="lobbyRoom">
+    <section class="panel">
+      <h2 id="playersTitle">Players</h2>
+      <ol id="players"></ol>
+      <form id="join" class="row" style="flex-wrap:nowrap">
+        <label for="name" hidden>Your name</label>
+        <input id="name" autocomplete="nickname" maxlength="24" placeholder="Your name" style="flex:1 1 auto;min-width:0">
+        <button class="pri" id="joinBtn" type="submit" style="flex:0 0 auto">Join</button>
+      </form>
+      <p class="msg" id="msg" aria-live="polite"></p>
+    </section>
+    <section class="panel hostpanel" id="hostBar">
+      <h2>Game settings</h2>
+      <div class="setrow seg" id="timerSeg"><span class="lbl">Timer</span>
+        <button type="button" data-s="0">Off</button><button type="button" data-s="15">15s</button><button type="button" data-s="30">30s</button><button type="button" data-s="60">60s</button>
+      </div>
+      <div class="setrow seg" id="cardSeg"><span class="lbl">Cards</span>
+        <button type="button" data-d="0">Paper</button><button type="button" data-d="1">Digital</button>
+      </div>
+      <button class="big" id="startBtn" type="button">Start game</button>
+    </section>
+    <p class="note" id="waitMsg"></p>
+  </div>
+
+  <!-- GAME -->
+  <div class="stack" id="playRoom" hidden>
   <div class="turn" id="turnBox" hidden>
     <div style="flex:1;min-width:0">
       <div class="tag">Reading now</div>
@@ -186,7 +226,7 @@ li.cur .num{background:var(--ball);border-color:var(--ball);color:var(--ball-ink
   <div class="qwrap">
   <section class="qcard" id="qcard" aria-live="polite">
     <div class="face">
-      <div class="qempty" id="qempty"><strong>No card drawn</strong>Join below, then the first reader taps “Draw a question”.</div>
+      <div class="qempty" id="qempty"><strong>No card drawn</strong><span id="qemptyMsg"></span></div>
       <div class="qcat" id="qcat" hidden></div>
       <div class="qtext" id="qtext" hidden></div>
       <div class="rule" id="rule" hidden></div>
@@ -196,6 +236,12 @@ li.cur .num{background:var(--ball);border-color:var(--ball);color:var(--ball-ink
   </section>
   <div class="qmeta"><span id="qcount"></span><span id="qhint"></span></div>
   <div class="timer" id="timer" hidden></div>
+
+  <section class="results" id="results" hidden aria-live="polite">
+    <div class="bonusbar" id="bonusBar" hidden><span id="bonusText">Exact answer! Tap any number on your card.</span><span class="secs" id="bonusSecs"></span></div>
+    <h3>Results</h3>
+    <ul class="rlist" id="rlist"></ul>
+  </section>
   </div>
 
   <div class="row" id="readerCtl" hidden>
@@ -208,7 +254,6 @@ li.cur .num{background:var(--ball);border-color:var(--ball);color:var(--ball-ink
 
   <section class="panel" id="markBox" hidden>
     <button class="mark-yes" id="markYes" type="button">Number pressed</button>
-    <div class="msg" id="markSum"></div>
   </section>
 
   <section class="panel" id="cardBox" hidden>
@@ -226,34 +271,17 @@ li.cur .num{background:var(--ball);border-color:var(--ball);color:var(--ball-ink
       <button class="ghost" id="bingoNo" type="button">False alarm, keep playing</button>
     </div>
     <div class="row" id="bingoDone" hidden>
-      <button class="pri" id="bingoNew" type="button">Start a new game</button>
-      <button class="ghost" id="bingoKeep" type="button">Keep playing</button>
+      <button class="pri" id="bingoNew" type="button">Play again</button>
+      <button class="ghost" id="bingoLobby" type="button">Back to lobby</button>
     </div>
   </div>
   <button class="bingo" id="bingoBtn" type="button" hidden>BINGO!</button>
 
-
-  <section class="panel">
-    <h2>Reading order</h2>
-    <ol id="players"></ol>
-    <form id="join" class="row" style="flex-wrap:nowrap">
-      <label for="name" hidden>Your name</label>
-      <input id="name" autocomplete="nickname" maxlength="24" placeholder="Your name" style="flex:1 1 auto;min-width:0">
-      <button class="pri" id="joinBtn" type="submit" style="flex:0 0 auto">Join</button>
-    </form>
-    <p class="msg" id="msg" aria-live="polite"></p>
-  </section>
-
-  <div class="host" id="hostBar" style="justify-content:space-between">
-    <div class="seg" id="timerSeg"><span>Timer</span>
-      <button type="button" data-s="0">Off</button><button type="button" data-s="15">15s</button><button type="button" data-s="30">30s</button><button type="button" data-s="60">60s</button>
-    </div>
-    <div class="seg" id="cardSeg"><span>Cards</span>
-      <button type="button" data-d="0">Paper</button><button type="button" data-d="1">Digital</button>
-    </div>
-    <button class="ghost" id="newGame" type="button">New game</button>
-    <button class="warn" id="newYes" type="button" hidden>Yes, reshuffle and start over</button>
-    <button class="ghost" id="newNo" type="button" hidden>Cancel</button>
+  <div class="host" id="hostPlay" hidden>
+    <button class="ghost" id="endBtn" type="button">End game</button>
+    <button class="warn" id="endYes" type="button" hidden>Yes, end and go to lobby</button>
+    <button class="ghost" id="endNo" type="button" hidden>Cancel</button>
+  </div>
   </div>
   <p class="note" id="hostNote"></p>
   </div>
@@ -380,8 +408,8 @@ const $=id=>document.getElementById(id);
 const store={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
 
 /* ---------- game state (mirrors the database) ---------- */
-const STATE0={turn:0,card:null,revealed:false,used:[],bingo:null,drawnAt:0};
-const SETTINGS0={timerSecs:0,digital:false,round:0};
+const STATE0={turn:0,card:null,revealed:false,revealedAt:0,used:[],bingo:null,drawnAt:0};
+const SETTINGS0={timerSecs:0,digital:false,round:0,phase:"lobby"};
 let uid=null, room=null, hostId=null, ready=false, serverOffset=0;
 let players=[], state={...STATE0}, settings={...SETTINGS0}, picks={};
 const serverNow=()=>Date.now()+serverOffset;
@@ -402,17 +430,56 @@ const hasCard=()=>state.card!==null && state.card!==undefined && !!BANK[state.ca
 /* a pick only counts for the question it was made on */
 function pickOf(id){ const p=picks[id]; return p && state.drawnAt && p.q===state.drawnAt ? p.v : null; }
 function pickIdx(id){ const v=pickOf(id); return typeof v==="string" && v.startsWith("sq") ? Number(v.slice(2)) : -1; }
+/* exact answer = a bonus pick, open for 10 seconds after the reveal */
+const BONUS_MS=10000;
+function exactFor(pl){ const i=pickIdx(pl.id); return !!pl.card && i>=0 && hasCard() && pl.card[i]===BANK[state.card][0]; }
+function bonusLeft(){ return state.revealed && state.revealedAt ? Math.max(0, state.revealedAt + BONUS_MS - serverNow()) : 0; }
+function bonusOpenFor(pl){ return !!pl && !!settings.digital && bonusLeft()>0 && exactFor(pl) && pl.bonus!==state.drawnAt; }
+const playing=()=>settings.phase==="playing";
 function fits(num){ if(!hasCard()) return false; const [n,,m]=BANK[state.card]; return m==="more" ? num>=n : num<=n; }
 
 function render(){
-  const p=ordered(), r=reader(), nx=nextReader(), mine=amReader(), digital=!!settings.digital, m0=me(), inGame=!!m0;
-  // turn banner
+  const p=ordered(), r=reader(), nx=nextReader(), mine=amReader(), digital=!!settings.digital, m0=me(), inGame=!!m0, live=playing();
+  const host=players.find(x=>x.id===hostId);
+  // ----- which screen -----
+  $("lobbyRoom").hidden = live && inGame;          // late arrivals still see the join form
+  $("playRoom").hidden = !live;
+  $("switchBtn").hidden = live && inGame;
+  $("hostBar").hidden = live || !isHost();
+  $("hostPlay").hidden = !live || !isHost();
+  $("playersTitle").textContent = live ? "Join the game" : "Players ("+p.length+")";
+  $("startBtn").disabled = !inGame;
+  $("startBtn").textContent = inGame ? "Start game" : "Add your name to start";
+  $("waitMsg").textContent = live ? "" : isHost() ? "Set things up, then tap Start game when everyone's in."
+    : host ? "Waiting for "+host.name+" to start the game." : "Waiting for the host to start the game.";
+  $("hostNote").textContent = !live && isHost() ? "You're the host: only you can change settings, start the game or remove players." : "";
+  document.querySelectorAll("#timerSeg button").forEach(b=>b.classList.toggle("on", Number(b.dataset.s)===(Number(settings.timerSecs)||0)));
+  document.querySelectorAll("#cardSeg button").forEach(b=>b.classList.toggle("on", (b.dataset.d==="1")===digital));
+  // ----- lobby player list -----
+  const ol=$("players"); ol.replaceChildren();
+  p.forEach((pl,i)=>{
+    const li=document.createElement("li");
+    const n=document.createElement("div"); n.className="num"; n.textContent=i+1;
+    const nm=document.createElement("div"); nm.className="pname"; nm.textContent=pl.name;
+    const tags=[]; if(pl.id===hostId) tags.push("host"); if(pl.id===uid) tags.push("you");
+    if(tags.length){ const y=document.createElement("span"); y.className="you"; y.textContent="  · "+tags.join(" · "); nm.append(y); }
+    li.append(n,nm);
+    const canRemove = !live && (isHost() ? pl.id!==uid : pl.id===uid);
+    if(canRemove){ const b=document.createElement("button"); b.className="ghost"; b.type="button"; b.textContent= pl.id===uid? "Leave":"Remove"; b.onclick=()=>removePlayer(pl); li.append(b); }
+    ol.append(li);
+  });
+  if(!p.length){ const li=document.createElement("li"); li.style.color="var(--muted)"; li.textContent="No one has joined yet."; ol.append(li); }
+  $("join").hidden = inGame || !ready;
+  if(!live){ return; }
+
+  // ----- turn banner -----
   $("turnBox").hidden = !r;
   if(r){ $("readerName").textContent = r.name + (mine?" (you)":""); $("nextName").textContent = nx? "Up next: "+nx.name : ""; }
-  // question card
+  // ----- question card -----
   const has=hasCard(), c=state.card;
   const showAns = has && (mine || state.revealed);
   $("qempty").hidden = has; $("qtext").hidden = !has; $("qcat").hidden = !has;
+  $("qemptyMsg").textContent = r ? (mine ? "Tap “Draw a question” when everyone's ready." : "Waiting for "+r.name+" to draw a question.") : "";
   $("rule").hidden = !showAns; $("mod").hidden = !showAns; $("arrow").hidden = !showAns;
   $("bnum").textContent = showAns ? BANK[c][0] : "?";
   $("qcount").textContent = has ? "Card " + (state.used||[]).length + " of " + BANK.length : "";
@@ -425,40 +492,60 @@ function render(){
       ? '<svg viewBox="0 0 26 34"><path d="M13 0 L26 14 H17 V34 H9 V14 H0 Z" fill="#3fbf6e"/></svg>'
       : '<svg viewBox="0 0 26 34"><path d="M9 0 H17 V20 H26 L13 34 L0 20 H9 Z" fill="#e5503f"/></svg>';
   }
-  // reader controls
+  tick();
+  // ----- results screen (after the reveal) -----
+  const showRes = has && state.revealed;
+  $("results").hidden = !showRes;
+  if(showRes){
+    const rl=$("rlist"); rl.replaceChildren();
+    p.filter(pl=>!r || pl.id!==r.id).forEach(pl=>{
+      const li=document.createElement("li");
+      const nm=document.createElement("span"); nm.className="rname"; nm.textContent=pl.name+(pl.id===uid?" (you)":"");
+      const num=document.createElement("span"); num.className="rnum";
+      const ch=document.createElement("span"); ch.className="chip";
+      if(digital){
+        const i=pickIdx(pl.id), v = pl.card && i>=0 ? pl.card[i] : null;
+        num.textContent = v!==null ? v : "–";
+        if(v===null){ ch.classList.add("wait"); ch.textContent="No pick"; }
+        else if(exactFor(pl)){ ch.classList.add("exact"); ch.textContent = pl.bonus===state.drawnAt ? "Exact · bonus used" : bonusLeft()>0 ? "Exact! Bonus pick" : "Exact"; }
+        else if(fits(v)){ ch.classList.add("yes"); ch.textContent="Correct"; }
+        else { ch.classList.add("no"); ch.textContent="Missed"; }
+      } else {
+        const pressed = pickOf(pl.id)==="yes";
+        ch.classList.add(pressed?"yes":"wait"); ch.textContent = pressed ? "Pressed" : "Not yet";
+      }
+      li.append(nm,num,ch); rl.append(li);
+    });
+    if(!rl.children.length){ const li=document.createElement("li"); li.textContent="No other players yet."; rl.append(li); }
+  }
+  // ----- reader controls -----
+  const waitingBonus = digital && p.some(bonusOpenFor);
   $("readerCtl").hidden = !mine;
   $("drawBtn").hidden = has;
   $("revealBtn").hidden = !has || state.revealed;
   $("skipBtn").hidden = !has || state.revealed;
   $("passBtn").hidden = !has || !state.revealed;
-  $("watchMsg").textContent = (!mine && r) ? (has? (state.revealed? r.name+" will pass to the next reader." : "Answer out loud! "+r.name+" will reveal the number.") : r.name+" is about to draw a question.") : "";
-  // host settings
-  document.querySelectorAll("#timerSeg button").forEach(b=>b.classList.toggle("on", Number(b.dataset.s)===(Number(settings.timerSecs)||0)));
-  document.querySelectorAll("#cardSeg button").forEach(b=>b.classList.toggle("on", (b.dataset.d==="1")===digital));
-  $("hostBar").hidden = !isHost();
-  const host=players.find(x=>x.id===hostId);
-  $("hostNote").textContent = isHost() ? "You're the host: only you can change settings, start a new game or remove players."
-    : host ? host.name+" is the host and controls the settings." : "";
-  tick();
-  // paper cards: "Number pressed"
-  const markOpen = has && state.revealed;
-  $("markBox").hidden = !markOpen || !inGame || digital;
-  if(markOpen && !digital){
+  $("passBtn").disabled = waitingBonus;
+  $("passBtn").textContent = waitingBonus ? "Waiting for bonus picks… "+Math.ceil(bonusLeft()/1000)+"s" : "Pass to next reader";
+  $("watchMsg").textContent = (!mine && r) ? (has? (state.revealed? r.name+" will pass to the next reader." : "Answer out loud! "+r.name+" will reveal the number.") : "") : "";
+  // ----- paper cards: "Number pressed" -----
+  $("markBox").hidden = !showRes || !inGame || digital || mine;
+  if(showRes && !digital){
     const pressed = pickOf(uid)==="yes";
     $("markYes").classList.toggle("sel", pressed);
-    $("markYes").textContent = pressed ? "Number pressed ✓  (tap to undo)" : "Number pressed";
-    const yes = p.filter(x=>pickOf(x.id)==="yes").map(x=>x.name);
-    $("markSum").textContent = yes.length ? "Pressed: "+yes.join(", ") : "Tap if you put a number on your card.";
+    $("markYes").textContent = pressed ? "Number pressed \u2713  (tap to undo)" : "Number pressed";
   }
-  // digital card
+  // ----- digital card -----
   const myCard = digital && m0 && m0.card && (m0.round||0)===(settings.round||0) ? m0.card : null;
   const lines = myCard ? doneLines(myCard, m0.marked) : [];
   const line = lines.length >= LINES_TO_WIN;
   const winSet = new Set(lines.flat());
+  const myBonus = myCard && bonusOpenFor(m0);
+  $("bonusBar").hidden = !myBonus;
   $("cardBox").hidden = !myCard;
   if(myCard){
     const pi = pickIdx(uid), marked=m0.marked||{}, misses=m0.misses||{};
-    const open = has && !state.revealed && !mine && !timeUp();
+    const pickOpen = has && !state.revealed && !mine && !timeUp();
     const grid=$("grid"); grid.replaceChildren();
     myCard.forEach((num,i)=>{
       const b=document.createElement("button"); b.type="button"; b.className="sq"; b.id="sq"+i; b.textContent=num;
@@ -467,25 +554,29 @@ function render(){
       else if(misses[i]){ b.classList.add("miss"); label+=", wrong"; }
       else if(!state.revealed && i===pi){ b.classList.add("pick"); label+=", your pick"; }
       if(winSet.has(i)) b.classList.add("win");
-      b.disabled = !(open && !marked[i]);
+      const can = !marked[i] && (pickOpen || myBonus);
+      if(myBonus && can) b.classList.add("open");
+      b.disabled = !can;
       b.setAttribute("aria-label", label);
-      b.onclick=()=>tapSquare(i);
+      b.onclick = myBonus ? ()=>useBonus(i) : ()=>tapSquare(i);
       grid.append(b);
     });
-    $("cardCount").textContent = Object.keys(marked).length+" correct · "+lines.length+" of "+LINES_TO_WIN+" lines";
+    $("cardCount").textContent = Object.keys(marked).length+" correct \u00b7 "+lines.length+" of "+LINES_TO_WIN+" lines";
     let msg;
     if(line) msg="Two lines! Tap BINGO.";
+    else if(myBonus) msg="Exact answer! Tap any number to claim it as a bonus.";
     else if(!has) msg = lines.length===1 ? "One line done. One more for Bingo!" : "When a question is drawn, tap the number you think is the answer.";
     else if(mine && !state.revealed) msg="You're reading this one, so no pick for you this round.";
     else if(!state.revealed) msg = timeUp() ? (pi>=0 ? "Time's up. Locked in "+myCard[pi]+"." : "Time's up. No pick this round.")
-                                : pi>=0 ? "Locked in "+myCard[pi]+". Tap another number to change it, or tap it again to clear." : "Tap the number you think is the answer.";
+                                : pi>=0 ? "Locked in "+myCard[pi]+". Tap another number to change it, or tap it again to clear." : "Tap the number you think is the answer. Exact answers earn a bonus number.";
+    else if(pi>=0 && exactFor(m0)) msg = m0.bonus===state.drawnAt ? "Exact answer! Bonus number claimed." : "Exact answer! The bonus window has closed.";
     else if(pi>=0 && fits(myCard[pi])) msg="Correct! "+myCard[pi]+" is yours.";
     else if(pi>=0) msg="Not this time. Your reds clear when it's your turn to read.";
     else msg = mine ? "You read this one." : "No pick this round.";
-    if(lines.length===1 && !line && has && state.revealed) msg+=" One line done!";
+    if(lines.length===1 && !line && has && state.revealed && !myBonus) msg+=" One line done!";
     $("cardMsg").textContent = msg;
   }
-  // bingo
+  // ----- bingo -----
   const bg = state.bingo;
   $("bingoBtn").hidden = !inGame || !!bg || (digital && !line);
   $("bingoBanner").hidden = !bg;
@@ -493,34 +584,12 @@ function render(){
     if(bg.confirmed && bg.confirmedAt && confettiFor!==bg.confirmedAt){ confettiFor=bg.confirmedAt; if(serverNow()-bg.confirmedAt < 20000) confetti(); }
     $("bingoTag").textContent = bg.confirmed ? "Winner" : "Bingo called";
     $("bingoWho").textContent = bg.confirmed ? bg.name+" wins!" : bg.name+" has Bingo!";
-    $("bingoSub").textContent = bg.confirmed ? (bg.digital ? "Two full lines on their card. Nice game, everyone." : "Nice game, everyone.") : "Hold the next question while everyone checks their card.";
+    $("bingoSub").textContent = bg.confirmed ? (bg.digital ? "Two full lines on their card. Nice game, everyone." : "Nice game, everyone.")
+      : "Hold the next question while everyone checks their card.";
     $("bingoCheck").hidden = !!bg.confirmed || !inGame;
     $("bingoDone").hidden = !bg.confirmed || !isHost();
+    if(bg.confirmed && !isHost()) $("bingoSub").textContent += host ? " "+host.name+" will start the next game." : "";
   }
-  // reading order
-  const ol=$("players"); ol.replaceChildren();
-  p.forEach((pl,i)=>{
-    const li=document.createElement("li"); if(r && pl.id===r.id) li.className="cur";
-    const n=document.createElement("div"); n.className="num"; n.textContent=i+1;
-    const nm=document.createElement("div"); nm.className="pname"; nm.textContent=pl.name;
-    const tags=[]; if(pl.id===hostId) tags.push("host"); if(pl.id===uid) tags.push("you");
-    if(tags.length){ const y=document.createElement("span"); y.className="you"; y.textContent="  · "+tags.join(" · "); nm.append(y); }
-    li.append(n,nm);
-    const v=pickOf(pl.id);
-    if(digital && has && typeof v==="string" && v.startsWith("sq") && pl.card){
-      const ch=document.createElement("span"), num=pl.card[Number(v.slice(2))];
-      if(!state.revealed){ ch.className="chip pick"; ch.textContent="Picked"; }
-      else if(fits(num)){ ch.className="chip yes"; ch.textContent="Correct"; }
-      else { ch.className="chip no"; ch.textContent="Missed"; }
-      li.append(ch);
-    } else if(!digital && markOpen && v==="yes"){ const ch=document.createElement("span"); ch.className="chip yes"; ch.textContent="Pressed"; li.append(ch); }
-    const canRemove = isHost() ? pl.id!==uid : pl.id===uid;
-    if(canRemove){ const b=document.createElement("button"); b.className="ghost"; b.type="button"; b.textContent= pl.id===uid? "Leave":"Remove";
-      b.onclick=()=>removePlayer(pl); li.append(b); }
-    ol.append(li);
-  });
-  if(!p.length){ const li=document.createElement("li"); li.style.color="var(--muted)"; li.textContent="No one has joined yet. Add your name to take the first turn."; ol.append(li); }
-  $("join").hidden = inGame || !ready;
 }
 
 /* ---------- my own data: deal my card, score my pick, clear my reds ---------- */
@@ -528,7 +597,7 @@ let syncing=false, syncFailAt=0;
 function syncMe(){
   const m0=me(); if(!ready || !m0 || syncing || Date.now()-syncFailAt<5000) return;
   const patch={};
-  if(settings.digital && (!m0.card || (m0.round||0)!==(settings.round||0))){
+  if(playing() && settings.digital && (!m0.card || (m0.round||0)!==(settings.round||0))){
     Object.assign(patch,{card:newCard(), round:settings.round||0, marked:null, misses:null, scored:null});
   } else if(settings.digital && m0.card && state.revealed && hasCard() && m0.scored!==state.drawnAt){
     const i=pickIdx(uid);
@@ -557,11 +626,12 @@ function drawIndex(){
 }
 $("drawBtn").onclick=()=>{ const d=drawIndex(); saveState({card:d.pick, used:d.used, revealed:false, drawnAt:serverNow()}); };
 $("skipBtn").onclick=()=>{ const d=drawIndex(); saveState({card:d.pick, used:d.used, revealed:false, drawnAt:serverNow()}); };
-$("revealBtn").onclick=()=>saveState({revealed:true});
-$("passBtn").onclick=()=>saveState({turn:(state.turn||0)+1, card:null, revealed:false, drawnAt:0});
+$("revealBtn").onclick=()=>saveState({revealed:true, revealedAt:serverNow()});
+$("passBtn").onclick=()=>{ if(digital_waiting()) return; saveState({turn:(state.turn||0)+1, card:null, revealed:false, revealedAt:0, drawnAt:0}); };
+function digital_waiting(){ return !!settings.digital && players.some(bonusOpenFor); }
 async function setPick(v){
   try{ await set(child(picksRef, uid), v===null ? null : {q:state.drawnAt, v}); }
-  catch(e){ $("cardMsg").textContent=$("markSum").textContent="Couldn't save. Try again."; }
+  catch(e){ $("cardMsg").textContent="Couldn't save. Try again."; }
 }
 $("markYes").onclick=()=>setPick(pickOf(uid)==="yes" ? null : "yes");
 $("timerSeg").addEventListener("click", e=>{ const b=e.target.closest("button[data-s]"); if(b) saveSettings({timerSecs:Number(b.dataset.s)}); });
@@ -576,7 +646,15 @@ function beep(){
   try{ navigator.vibrate && navigator.vibrate([200,100,200]); }catch(e){}
 }
 function timeUp(){ const secs=Number(settings.timerSecs)||0; return secs>0 && !!state.drawnAt && serverNow() > state.drawnAt + secs*1000; }
+let bonusWasOpen=false;
 function tick(){
+  if(playing()){
+    const m0=me(), open=!!m0 && bonusOpenFor(m0), anyOpen=!!settings.digital && players.some(bonusOpenFor);
+    if(open) $("bonusSecs").textContent=Math.ceil(bonusLeft()/1000)+"s";
+    if(anyOpen && amReader()) $("passBtn").textContent="Waiting for bonus picks… "+Math.ceil(bonusLeft()/1000)+"s";
+    if(bonusWasOpen && !anyOpen){ bonusWasOpen=false; render(); return; }
+    bonusWasOpen = anyOpen;
+  }
   const t=$("timer"), secs=Number(settings.timerSecs)||0;
   const active = secs>0 && hasCard() && !state.revealed && state.drawnAt;
   t.hidden=!active; if(!active) return;
@@ -624,14 +702,20 @@ function newCard(){
   const used=new Set(players.filter(p=>p.id!==uid && p.card && (p.round||0)===(settings.round||0)).map(p=>cardKey(p.card)));
   let c; do{ c=randomCard(); }while(used.has(cardKey(c))); return c;
 }
+async function useBonus(i){
+  const m0=me(); if(!m0 || !bonusOpenFor(m0) || (m0.marked||{})[i]) return;
+  try{ await update(child(playersRef, uid), {["marked/"+i]:true, ["misses/"+i]:null, bonus:state.drawnAt}); }
+  catch(e){ $("cardMsg").textContent="Couldn't claim that number. Try again."; }
+}
 async function tapSquare(i){
   if(!hasCard()||state.revealed||amReader()||timeUp()) return;
   setPick(pickOf(uid)==="sq"+i ? null : "sq"+i);
 }
-async function newGame(){
+/* host: fresh deck, turns and cards; phase decides lobby vs playing */
+async function newGame(phase){
   if(!isHost()) return;
   await saveState({...STATE0, used:null, bingo:null, card:null});
-  await saveSettings({round:serverNow()});     // every phone deals itself a fresh card
+  await saveSettings({round:serverNow(), phase});     // every phone deals itself a fresh card
 }
 
 /* ---- confetti ---- */
@@ -662,11 +746,12 @@ $("bingoBtn").onclick=()=>{
 };
 $("bingoOk").onclick=()=>{ if(state.bingo) saveState({bingo:{...state.bingo, confirmed:true, confirmedAt:serverNow()}}); };
 $("bingoNo").onclick=()=>saveState({bingo:null});
-$("bingoKeep").onclick=()=>saveState({bingo:null});
-$("bingoNew").onclick=()=>newGame();
-$("newGame").onclick=()=>{ $("newGame").hidden=true; $("newYes").hidden=false; $("newNo").hidden=false; };
-$("newNo").onclick=()=>{ $("newGame").hidden=false; $("newYes").hidden=true; $("newNo").hidden=true; };
-$("newYes").onclick=()=>{ $("newNo").onclick(); newGame(); };
+$("bingoNew").onclick=()=>newGame("playing");
+$("bingoLobby").onclick=()=>newGame("lobby");
+$("startBtn").onclick=()=>{ if(isHost() && joined()) newGame("playing"); };
+$("endBtn").onclick=()=>{ $("endBtn").hidden=true; $("endYes").hidden=false; $("endNo").hidden=false; };
+$("endNo").onclick=()=>{ $("endBtn").hidden=false; $("endYes").hidden=true; $("endNo").hidden=true; };
+$("endYes").onclick=()=>{ $("endNo").onclick(); newGame("lobby"); };
 
 /* ---------- connecting: sign-in, lobby, rooms ---------- */
 const configured = !String(FIREBASE_CONFIG.apiKey).startsWith("PASTE");
@@ -705,7 +790,7 @@ async function enterRoom(code, fresh){
     players = Object.entries(v||{}).map(([id,d])=>{
       let card = d.card ? (Array.isArray(d.card) ? d.card : Object.values(d.card)).map(Number) : null;
       if(card && card.length!==25) card=null;
-      return {id, name:String(d.name||""), at:Number(d.at)||0, card, round:Number(d.round)||0, scored:d.scored, marked:d.marked||{}, misses:d.misses||{}};
+      return {id, name:String(d.name||""), at:Number(d.at)||0, card, round:Number(d.round)||0, scored:d.scored, bonus:d.bonus, marked:d.marked||{}, misses:d.misses||{}};
     });
   });
   on(picksRef, v=>{ picks=v||{}; });
@@ -719,7 +804,7 @@ $("createBtn").onclick=async()=>{
     const code=genCode();
     try{
       await update(ref(db,`rooms/${code}`), {host:uid, created:serverNow()});
-      await set(ref(db,`rooms/${code}/settings`), {...SETTINGS0, round:serverNow()});
+      await set(ref(db,`rooms/${code}/settings`), {...SETTINGS0, round:serverNow(), phase:"lobby"});
       $("createBtn").disabled=false; enterRoom(code, true); return;
     }catch(e){ /* code taken or rules not set: try another */ }
   }

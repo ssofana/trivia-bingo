@@ -10,9 +10,9 @@ No app store and no accounts: open the link in Safari or Chrome and play.
 
 1. **Host:** open the site and tap **Start a new game**. You get a 6-character **game code** (e.g. `K7QF2M`) and become the game's **host**.
 2. **Invite:** tap **Invite** to text the link, or read out the code. Others tap the link, or type the code under **Join with a game code**.
-3. **Join:** everyone adds their name. The order people join is the **reading order**.
+3. **Lobby:** everyone adds their name. The order people join is the **reading order**. The host picks the **Timer** and **Cards** settings, then taps **Start game**.
 
-Each phone remembers its last game and goes straight back to it. **Switch game** returns to the start screen.
+Once the game starts, the lobby (player list, settings, Switch game) is hidden so the screen is just the question, your card and the controls. Late arrivals can still join from the link. Each phone remembers its last game and goes straight back to it.
 
 ## How to play
 
@@ -25,6 +25,8 @@ Each phone remembers its last game and goes straight back to it. **Switch game**
    - If the **timer** is on, a countdown runs on every phone and picks lock at zero.
 3. **Reveal.** The reader taps **Reveal answer to everyone**.
    - **Digital:** a correct pick turns **green** and stays. A wrong pick turns **red**.
+   - **Exact answer bonus:** pick the *exact* number (not just inside the range) and you get **10 seconds to claim a second number**, any square on your card. The reader's Pass button waits until bonus picks are done or time runs out.
+   - A **results screen** under the question shows each player's pick: **Exact**, **Correct**, **Missed** or **No pick**.
    - **Paper:** if you got it right and marked your board, tap **Number pressed**.
 4. **Pass.** The reader taps **Pass to next reader**.
 5. **Bingo.** Tap **BINGO!** when you win. Confetti plays on every phone when the win is confirmed.
@@ -34,14 +36,16 @@ Every card has a direction. For **19 or less**, any number from 1 to 19 is corre
 
 ---
 
-## Host settings (bottom of the page, host only)
+## Host settings (lobby, host only)
 
 | Setting | Options | What it does |
 |---|---|---|
 | **Timer** | Off / 15s / 30s / 60s | Countdown from when a card is drawn. Beeps at zero and locks picks. |
 | **Cards** | Paper / Digital | **Paper** works with the physical boards. **Digital** gives each player a 5×5 card on their phone. |
-| **New game** | – | Reshuffles the question deck, resets turns, and deals everyone a new digital card. |
-| **Remove** | – | Removes a player from the reading order. |
+| **Start game** | – | Starts play with a fresh deck, turns and cards. |
+| **Remove** | – | Removes a player from the reading order (lobby only). |
+
+During a game the host also has **End game** (back to the lobby). After a confirmed Bingo the host can **Play again** or go **Back to lobby**.
 
 Other players see who the host is and can only **Leave** themselves.
 
@@ -122,9 +126,9 @@ The Firebase settings in `index.html` are meant to be public. The rules are what
 ```
 rooms/<CODE>/
   host        uid of the person who created the game
-  settings    timerSecs, digital, round           (host only)
-  state       turn, card, revealed, used, bingo   (players in the game)
-  players/<uid>  name, at, card, marked, misses   (that player, or the host)
+  settings    timerSecs, digital, round, phase    (host only)
+  state       turn, card, revealed, revealedAt, used, bingo   (players in the game)
+  players/<uid>  name, at, card, marked, misses, bonus   (that player, or the host)
   picks/<uid>    the player's pick for the current question  (that player)
 ```
 
