@@ -30,7 +30,7 @@ Once the game starts, the lobby (player list, settings, Switch game) is hidden s
    - A **results screen** under the question shows each player's pick: **Exact**, **Correct**, **Missed** or **No pick**.
    - **Paper:** if you got it right and marked your board, tap **Number pressed**.
 4. **Pass.** The reader taps **Pass to next reader**.
-5. **Bingo.** Tap **BINGO!** when you win. Confetti plays on every phone when the win is confirmed.
+5. **Bingo.** Tap **BINGO!** when you win. A full-screen winner screen with confetti appears on every phone, and the host chooses **Replay** or **Back to lobby**.
 
 ### "Or more" and "or less"
 Every card has a direction. For **19 or less**, any number from 1 to 19 is correct. For **12 or more**, any number from 12 to 31. Picking the exact answer is always safe. Picking near it works only if you guess the direction right.
@@ -47,7 +47,7 @@ Every card has a direction. For **19 or less**, any number from 1 to 19 is corre
 | **Start game** | – | Starts play with a fresh deck, turns and cards. |
 | **Remove** | – | Removes a player from the reading order (lobby only). |
 
-During a game the host also has **End game** (back to the lobby). After a confirmed Bingo the host can **Play again** or go **Back to lobby**.
+During a game the host also has **End game** (back to the lobby). When someone wins, a full-screen **winner screen** takes over every phone (with confetti and, for digital cards, the winning card). The host then picks **Replay** or **Back to lobby**.
 
 Other players see who the host is and can only **Leave** themselves.
 

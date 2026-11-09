@@ -127,11 +127,32 @@ li.cur .num{background:var(--ball);border-color:var(--ball);color:var(--ball-ink
 .host{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;align-items:center}
 .note{font-size:13px;color:var(--muted);text-align:center;margin:0}
 .bingo{width:100%;background:var(--up-line);color:#1d1838;font-family:var(--display);font-size:26px;letter-spacing:.06em;padding:16px;border-radius:999px;box-shadow:inset 0 -5px 0 rgba(0,0,0,.18)}
-.bingoBanner{background:var(--ball);color:var(--ball-ink);border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:10px;text-align:center}
-.bingoBanner .tag{color:var(--ball-ink);opacity:.85}
-.bwho{font-family:var(--display);font-size:28px;line-height:1.1;overflow-wrap:anywhere}
-.bingoBanner .ghost{color:var(--ball-ink)}
-.bingoBanner .pri{background:var(--ball-ink);color:var(--ball)}
+/* full-screen bingo: covers the game so nobody misses it */
+.bingoBanner{position:fixed;inset:0;z-index:40;background:var(--ball);color:var(--ball-ink);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;overflow-y:auto;
+  padding:calc(28px + env(safe-area-inset-top,0px)) max(20px,env(safe-area-inset-right,0px)) calc(28px + env(safe-area-inset-bottom,0px)) max(20px,env(safe-area-inset-left,0px))}
+/* the winner screen is gold, with dark ink, in both themes */
+.bingoBanner.won{--win-ink:#1d1838;background:radial-gradient(circle at 50% 30%,#fff1b0 0%,#f5cf4f 50%,#dfa823 100%);color:var(--win-ink)}
+.bingoBanner.won .tag{color:var(--win-ink);opacity:.8}
+.bingoBanner.won .bigword{color:var(--win-ink);text-shadow:0 4px 0 rgba(255,255,255,.45)}
+.bingoBanner.won .pri{background:var(--win-ink);color:#ffe27a}
+.bingoBanner.won .ghost{color:var(--win-ink)}
+.bingoBanner.won .wincard{background:rgba(29,24,56,.1)}
+.bingoBanner.won .wc{background:rgba(255,255,255,.45);color:var(--win-ink)}
+.bingoBanner.won .wc.hit{background:#ffffff;color:#1f8a4c}
+.bingoBanner.won .wc.win{background:#2b2a8c;color:#ffffff}
+.bingoBanner .tag{color:var(--ball-ink);opacity:.9;font-size:13px}
+.bigword{font-family:var(--display);font-size:clamp(48px,16vw,84px);line-height:.95;letter-spacing:.02em;text-shadow:0 4px 0 rgba(0,0,0,.18)}
+.bwho{font-family:var(--display);font-size:clamp(26px,8vw,38px);line-height:1.1;overflow-wrap:anywhere;max-width:16ch}
+#bingoSub{max-width:32ch;font-size:16px;opacity:.95}
+.bingoBanner .row{flex-direction:column;width:100%;max-width:340px;gap:10px}
+.bingoBanner .row > *{flex:none;width:100%}
+.bingoBanner .pri{background:var(--ball-ink);color:var(--ball);font-family:var(--display);font-size:20px;padding:15px;border-radius:14px}
+.bingoBanner .ghost{color:var(--ball-ink);border:2px solid currentColor;font-size:17px;font-weight:800;padding:13px;border-radius:14px}
+.bingoBanner .waitnote{font-size:14px;opacity:.9;max-width:30ch}
+.wincard{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px;width:min(250px,72vw);padding:8px;border-radius:14px;background:rgba(0,0,0,.14)}
+.wc{aspect-ratio:1;border-radius:8px;background:rgba(255,255,255,.16);color:inherit;display:grid;place-items:center;font-weight:800;font-size:14px;font-variant-numeric:tabular-nums}
+.wc.hit{background:rgba(255,255,255,.92);color:#1f8a4c}
+.wc.win{background:#e9c64a;color:#1d1838}
 @media (prefers-reduced-motion:no-preference){.bingoBanner{animation:shake .5s ease-out}@keyframes shake{0%{transform:scale(.9)}50%{transform:scale(1.04)}100%{transform:none}}}
 @media (prefers-reduced-motion:no-preference){.qcard{animation:flip .3s ease-out}@keyframes flip{from{transform:rotateX(14deg);opacity:.5}to{transform:none;opacity:1}}}
 
@@ -284,16 +305,19 @@ li.cur .num{background:var(--ball);border-color:var(--ball);color:var(--ball-ink
 
   <div class="bingoBanner" id="bingoBanner" hidden>
     <div class="tag" id="bingoTag">Bingo called</div>
+    <div class="bigword">BINGO!</div>
     <div class="bwho" id="bingoWho"></div>
+    <div class="wincard" id="winCard" hidden aria-label="Winning card"></div>
     <div id="bingoSub"></div>
     <div class="row" id="bingoCheck">
       <button class="pri" id="bingoOk" type="button">Card checks out</button>
       <button class="ghost" id="bingoNo" type="button">False alarm, keep playing</button>
     </div>
     <div class="row" id="bingoDone" hidden>
-      <button class="pri" id="bingoNew" type="button">Play again</button>
+      <button class="pri" id="bingoNew" type="button">Replay</button>
       <button class="ghost" id="bingoLobby" type="button">Back to lobby</button>
     </div>
+    <p class="waitnote" id="bingoWait" hidden></p>
   </div>
   <button class="bingo" id="bingoBtn" type="button" hidden>BINGO!</button>
 
@@ -698,19 +722,31 @@ function render(){
     if(lines.length===1 && !line && has && state.revealed && !myBonus) msg+=" One line done!";
     $("cardMsg").textContent = msg;
   }
-  // ----- bingo -----
+  // ----- bingo: full-screen -----
   const bg = state.bingo;
   $("bingoBtn").hidden = !inGame || !!bg || (digital && !line);
   $("bingoBanner").hidden = !bg;
+  document.body.style.overflow = bg ? "hidden" : "";
   if(bg){
-    if(bg.confirmed && bg.confirmedAt && confettiFor!==bg.confirmedAt){ confettiFor=bg.confirmedAt; if(serverNow()-bg.confirmedAt < 20000) confetti(); }
-    $("bingoTag").textContent = bg.confirmed ? "Winner" : "Bingo called";
-    $("bingoWho").textContent = bg.confirmed ? bg.name+" wins!" : bg.name+" has Bingo!";
-    $("bingoSub").textContent = bg.confirmed ? (bg.digital ? "Two full lines on their card. Nice game, everyone." : "Nice game, everyone.")
-      : "Hold the next question while everyone checks their card.";
-    $("bingoCheck").hidden = !!bg.confirmed || !inGame;
-    $("bingoDone").hidden = !bg.confirmed || !isHost();
-    if(bg.confirmed && !isHost()) $("bingoSub").textContent += host ? " "+host.name+" will start the next game." : "";
+    const won=!!bg.confirmed;
+    $("bingoBanner").classList.toggle("won", won);
+    if(won && bg.confirmedAt && confettiFor!==bg.confirmedAt){ confettiFor=bg.confirmedAt; if(serverNow()-bg.confirmedAt < 20000) confetti(); }
+    $("bingoTag").textContent = won ? "We have a winner" : "Bingo called";
+    $("bingoWho").textContent = won ? bg.name+" wins!" : bg.name+" says Bingo!";
+    // the winner's card, with their lines in gold
+    const wp = players.find(x=>x.name===bg.name);
+    const wcard = won && digital && wp && wp.card ? wp.card : null;
+    const wc=$("winCard"); wc.hidden=!wcard; wc.replaceChildren();
+    if(wcard){
+      const wl=new Set(doneLines(wcard, wp.marked).flat());
+      wcard.forEach((num,i)=>{ const d=document.createElement("div"); d.className="wc"+(wl.has(i)?" win":(wp.marked||{})[i]?" hit":""); d.textContent=num; wc.append(d); });
+    }
+    $("bingoSub").textContent = won ? (bg.digital ? "Two full lines. Nice game, everyone!" : "Nice game, everyone!")
+      : "Everyone check "+bg.name+"'s card before the next question.";
+    $("bingoCheck").hidden = won || !inGame;
+    $("bingoDone").hidden = !won || !isHost();
+    $("bingoWait").hidden = !won || isHost();
+    $("bingoWait").textContent = host ? "Waiting for "+host.name+" to replay or go back to the lobby." : "Waiting for the host.";
   }
 }
 
