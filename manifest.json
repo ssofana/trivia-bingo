@@ -1,0 +1,21 @@
+{
+  "name": "Trivia Bingo",
+  "short_name": "Trivia Bingo",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f3f1fb",
+  "theme_color": "#2b2a8c",
+  "icons": [
+    {
+      "src": "icon-180.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
