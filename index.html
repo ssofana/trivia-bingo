@@ -99,6 +99,82 @@ button:disabled{opacity:.45;cursor:default}
 .answered .who{display:inline-flex;align-items:center;gap:5px;max-width:9em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .dot{width:10px;height:10px;border-radius:50%;border:1.5px solid var(--muted);flex:none;box-sizing:border-box}
 .dot.on{background:var(--more);border-color:var(--more)}
+/* ===== compact in-game layout ===== */
+#playRoom.stack{gap:12px}
+.wrap.inplay{gap:12px}
+.gbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;display:flex;align-items:center;gap:10px;padding:6px 0 8px;background:var(--bg)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.ball.sm{width:30px;height:30px;font-size:17px;box-shadow:inset -3px -4px 0 rgba(0,0,0,.15)}
+.gturn{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.15}
+.gturn .tag{font-size:10px;letter-spacing:.1em}
+.gturn b{font-family:var(--display);font-weight:400;font-size:18px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gnext{font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.codechip{flex:none;font-family:var(--display);font-size:12px;letter-spacing:.12em;padding:7px 10px;border-radius:999px;background:var(--card);border:1px solid var(--line);color:var(--fg)}
+/* question card, tighter */
+.qcard .face{position:relative}
+.qcard:not(.round) .face{padding:14px 16px 0;gap:6px}
+.qcard:not(.round) .qtext{font-size:clamp(17px,4.6vw,20px)}
+.qcard:not(.round) .band{padding:7px 0 9px;margin-top:6px}
+.qcard:not(.round) .bnum{font-size:30px}
+.qtop{align-self:stretch;display:flex;justify-content:center;align-items:center;position:relative;min-height:18px}
+.qtop .timer{position:absolute;right:-4px;top:50%;transform:translateY(-50%);font-size:13px;padding:2px 9px;border-width:1.5px;background:var(--face);color:var(--ink);border-color:#d6d1ea;animation:none}
+.qtop .timer.low{color:var(--red);border-color:var(--red)}
+.qtop .timer.up{background:var(--red);border-color:var(--red);color:#fff;font-size:11px}
+.qcard.round .qtop .timer{position:static;transform:none;margin-left:8px}
+.tbar{position:absolute;left:0;right:0;top:0;height:4px;background:rgba(43,42,140,.12)}
+.tbar i{display:block;height:100%;width:100%;background:var(--rim);transition:width .25s linear}
+.tbar.low i{background:var(--red)}
+.qempty{padding:6px 0 2px}
+/* one status strip: who's in → results */
+.strip{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;align-items:center;min-height:30px;font-size:13px;color:var(--muted);text-align:center}
+.strip .cnt{font-weight:800;color:var(--fg);margin-right:2px}
+.pill{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:999px;background:var(--card);border:1px solid var(--line);font-size:13px;font-weight:700;color:var(--fg);max-width:12em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pill .v{font-family:var(--display);font-weight:400}
+.pill.exact{background:var(--up-line);border-color:var(--up-line);color:#1d1838}
+.pill.yes{background:var(--more);border-color:var(--more);color:var(--more-ink)}
+.pill.no{color:var(--muted)}
+.pill.none{opacity:.55}
+/* actions */
+.actions{display:flex;gap:8px;align-items:stretch}
+.actions > .big,.actions > .pri{flex:1;font-size:17px;padding:14px;border-radius:14px}
+.actions > .big{font-size:18px}
+.actions > .ghost{flex:none;padding:0 14px;border:1.5px solid var(--line);border-radius:14px}
+.bingo{padding:12px;font-size:22px}
+#markYes{width:100%}
+/* your card, no box: the grid is the content */
+.cardbox{display:flex;flex-direction:column;gap:8px}
+.cardhead{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.ch-title{font-family:var(--display);font-size:14px;letter-spacing:.04em}
+.cardhead .legend{font-size:12px;color:var(--muted)}
+.cardbox .grid{gap:5px}
+.cardbox .sq{aspect-ratio:5/4;border-radius:10px;font-size:clamp(16px,5vw,20px)}
+.cmsg{font-size:13px;color:var(--muted);text-align:center;min-height:1.3em}
+.cardbox .bonusbar{padding:8px 12px;font-size:14px}
+.cardbox .bonusbar .secs{font-size:18px}
+#hostPlay{justify-content:center}
+/* your turn: the top bar lights up in the accent colour */
+.gbar.myturn{background:var(--accent);color:var(--accent-ink);border-radius:16px;padding:8px 12px;margin-top:2px;box-shadow:0 6px 18px color-mix(in srgb,var(--accent) 35%,transparent)}
+.gbar.myturn .gturn .tag{color:var(--accent-ink);opacity:.8}
+.gbar.myturn .gturn b{font-size:22px;letter-spacing:.02em}
+.gbar.myturn .gnext{color:var(--accent-ink);opacity:.8}
+.gbar.myturn .codechip{background:transparent;border-color:color-mix(in srgb,var(--accent-ink) 35%,transparent);color:var(--accent-ink)}
+.gbar.myturn .ball.sm{box-shadow:inset -3px -4px 0 rgba(0,0,0,.15),0 0 0 2px var(--accent-ink)}
+/* answer number takes the arrow's colour */
+.bnum{font-weight:900}
+.bnum.more{color:#4fd18a}
+.bnum.less{color:#ff6a5c}
+/* smooth stage changes */
+@media (prefers-reduced-motion:no-preference){
+  .qcard.enter{animation:cardIn .4s cubic-bezier(.2,.8,.2,1)}
+  @keyframes cardIn{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:none}}
+  .bnum.pop{animation:numPop .5s cubic-bezier(.2,.8,.2,1)}
+  @keyframes numPop{0%{transform:scale(.4);opacity:0}70%{transform:scale(1.15);opacity:1}100%{transform:none}}
+  .strip.fade > *{animation:fadeUp .3s ease-out both}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+  .gturn.flash{animation:turnIn .5s ease-out}
+  @keyframes turnIn{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:none}}
+  .actions.swap > *{animation:fadeUp .25s ease-out both}
+}
 /* results screen */
 .results{width:100%;max-width:460px;box-sizing:border-box;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
 .results h3{margin:0;font-family:var(--display);font-weight:400;font-size:16px}
@@ -197,7 +273,7 @@ li.cur .num{background:var(--ball);border-color:var(--ball);color:var(--ball-ink
 </head>
 <body>
 <div class="wrap">
-  <header>
+  <header id="hdr">
     <div class="ball" aria-hidden="true">?</div>
     <h1>Trivia Bingo</h1>
   </header>
@@ -217,7 +293,7 @@ li.cur .num{background:var(--ball);border-color:var(--ball);color:var(--ball-ink
   </section>
 
   <div id="game" hidden>
-  <div class="roombar">
+  <div class="roombar" id="roomBar">
     <span class="lbl">Game code</span><span class="code" id="roomCode"></span>
     <span class="sp"></span>
     <button class="pri" id="shareBtn" type="button" style="padding:8px 12px;font-size:14px">Invite</button>
@@ -255,52 +331,41 @@ li.cur .num{background:var(--ball);border-color:var(--ball);color:var(--ball-ink
 
   <!-- GAME -->
   <div class="stack" id="playRoom" hidden>
-  <div class="turn" id="turnBox" hidden>
-    <div style="flex:1;min-width:0">
-      <div class="tag">Reading now</div>
-      <div class="who" id="readerName"></div>
-      <div class="next" id="nextName"></div>
-    </div>
+  <div class="gbar">
+    <div class="ball sm" aria-hidden="true">?</div>
+    <div class="gturn" id="gturn"><span class="tag" id="gTag">Reading</span><b id="readerName"></b><span class="gnext" id="nextName"></span></div>
+    <button class="codechip" id="gInvite" type="button" aria-label="Invite players"><span id="gCode"></span></button>
   </div>
 
-  <div class="qwrap">
   <section class="qcard" id="qcard" aria-live="polite">
     <div class="face">
-      <div class="qempty" id="qempty"><strong>No card drawn</strong><span id="qemptyMsg"></span></div>
-      <div class="qcat" id="qcat" hidden></div>
+      <div class="tbar" id="tbar" hidden><i id="tfill"></i></div>
+      <div class="qtop"><span class="qcat" id="qcat"></span><span class="timer" id="timer" hidden></span></div>
+      <div class="qempty" id="qempty"><strong id="qemptyTitle">Get ready</strong><span id="qemptyMsg"></span></div>
       <div class="qtext" id="qtext" hidden></div>
       <div class="rule" id="rule" hidden></div>
       <div class="mod" id="mod" hidden></div>
       <div class="band"><span class="bnum" id="bnum">?</span><span class="arrow" id="arrow" hidden></span></div>
     </div>
   </section>
-  <div class="qmeta"><span id="qcount"></span><span id="qhint"></span></div>
-  <div class="timer" id="timer" hidden></div>
 
-  <section class="results" id="results" hidden aria-live="polite">
-    <div class="bonusbar" id="bonusBar" hidden><span id="bonusText">Exact answer! Tap any number on your card.</span><span class="secs" id="bonusSecs"></span></div>
-    <h3>Results</h3>
-    <ul class="rlist" id="rlist"></ul>
-  </section>
-  </div>
+  <div class="strip" id="strip" aria-live="polite"></div>
 
-  <div class="row" id="readerCtl" hidden>
+  <div class="actions" id="readerCtl" hidden>
     <button class="big" id="drawBtn" type="button">Draw a question</button>
-    <button class="pri" id="revealBtn" type="button" hidden>Reveal answer to everyone</button>
-    <button class="pri" id="passBtn" type="button" hidden>Pass to next reader</button>
-    <button class="ghost" id="skipBtn" type="button" hidden>Skip this question</button>
+    <button class="pri" id="revealBtn" type="button">Reveal answer</button>
+    <button class="ghost" id="skipBtn" type="button">Skip</button>
+    <button class="pri" id="passBtn" type="button">Next question</button>
   </div>
-  <div class="answered" id="answered" hidden aria-live="polite"></div>
-  <p class="msg" id="watchMsg"></p>
 
-  <section class="panel" id="markBox" hidden>
-    <button class="mark-yes" id="markYes" type="button">Number pressed</button>
-  </section>
+  <button class="mark-yes" id="markYes" type="button" hidden>Number pressed</button>
+  <button class="bingo" id="bingoBtn" type="button" hidden>BINGO!</button>
 
-  <section class="panel" id="cardBox" hidden>
-    <div class="cardhead"><h2>Your card</h2><span class="legend" id="cardCount" style="font-size:13px;color:var(--muted)"></span></div>
+  <section class="cardbox" id="cardBox" hidden>
+    <div class="cardhead"><span class="ch-title">YOUR CARD</span><span class="legend" id="cardCount"></span></div>
+    <div class="bonusbar" id="bonusBar" hidden><span id="bonusText">Exact! Tap any number for a bonus</span><span class="secs" id="bonusSecs"></span></div>
     <div class="grid" id="grid"></div>
-    <div class="msg" id="cardMsg"></div>
+    <div class="cmsg" id="cardMsg"></div>
   </section>
 
   <div class="bingoBanner" id="bingoBanner" hidden>
@@ -319,7 +384,6 @@ li.cur .num{background:var(--ball);border-color:var(--ball);color:var(--ball-ink
     </div>
     <p class="waitnote" id="bingoWait" hidden></p>
   </div>
-  <button class="bingo" id="bingoBtn" type="button" hidden>BINGO!</button>
 
   <div class="host" id="hostPlay" hidden>
     <button class="ghost" id="endBtn" type="button">End game</button>
@@ -562,6 +626,8 @@ function exactFor(pl){ const i=pickIdx(pl.id); return !!pl.card && i>=0 && hasCa
 function bonusLeft(){ return state.revealed && state.revealedAt ? Math.max(0, state.revealedAt + BONUS_MS - serverNow()) : 0; }
 function bonusOpenFor(pl){ return !!pl && !!settings.digital && bonusLeft()>0 && exactFor(pl) && pl.bonus!==state.drawnAt; }
 const playing=()=>settings.phase==="playing";
+let lastTurnId=null, lastDrawn=null, lastRev=null, lastStage=null;
+function replay(el, cls){ el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); }
 function fits(num){ if(!hasCard()) return false; const [n,,m]=BANK[state.card]; return m==="more" ? num>=n : num<=n; }
 
 function render(){
@@ -571,6 +637,10 @@ function render(){
   $("lobbyRoom").hidden = live && inGame;          // late arrivals still see the join form
   $("playRoom").hidden = !live;
   $("switchBtn").hidden = live && inGame;
+  $("hdr").hidden = live && inGame; $("roomBar").hidden = live && inGame;
+  document.querySelector(".wrap").classList.toggle("inplay", live && inGame);
+  $("status").hidden = live && inGame && $("status").textContent.startsWith("Live");
+  $("gCode").textContent = room||"";
   $("hostBar").hidden = live || !isHost();
   $("hostPlay").hidden = !live || !isHost();
   $("playersTitle").textContent = live ? "Join the game" : "Players ("+p.length+")";
@@ -601,86 +671,89 @@ function render(){
   $("join").hidden = inGame || !ready;
   if(!live){ return; }
 
-  // ----- turn banner -----
-  $("turnBox").hidden = !r;
-  if(r){ $("readerName").textContent = r.name + (mine?" (you)":""); $("nextName").textContent = nx? "Up next: "+nx.name : ""; }
+  // ----- top bar: who's reading -----
+  const has=hasCard(), c=state.card, rev=has && state.revealed, others=p.filter(pl=>!r || pl.id!==r.id);
+  $("gTag").textContent = mine ? "It's your turn" : "Reading";
+  $("readerName").textContent = r ? (mine ? "YOUR TURN" : r.name) : "";
+  document.querySelector(".gbar").classList.toggle("myturn", !!mine);
+  if(mine) $("gTag").textContent = "Read the question";
+  $("nextName").textContent = nx ? "Next: "+(nx.id===uid ? "you" : nx.name) : "";
+  if(r && lastTurnId!==r.id){ lastTurnId=r.id; replay($("gturn"),"flash"); }
+
   // ----- question card -----
-  const has=hasCard(), c=state.card;
-  const showAns = has && (mine || state.revealed);
-  $("qempty").hidden = has; $("qtext").hidden = !has; $("qcat").hidden = !has;
-  $("qemptyMsg").textContent = r ? (mine ? "Tap “Draw a question” when everyone's ready." : "Waiting for "+r.name+" to draw a question.") : "";
+  const showAns = has && (mine || rev);
+  $("qempty").hidden = has; $("qtext").hidden = !has;
+  $("qemptyTitle").textContent = mine ? "Your turn to read" : "Get ready";
+  $("qemptyMsg").textContent = r ? (mine ? "Draw a question when everyone's ready." : "Waiting for "+r.name+" to draw a question.") : "";
   $("rule").hidden = !showAns; $("mod").hidden = !showAns; $("arrow").hidden = !showAns;
   $("bnum").textContent = showAns ? BANK[c][0] : "?";
-  $("qcount").textContent = has ? "Card " + (state.used||[]).length + " of " + BANK.length : "";
-  $("qhint").textContent = !has ? "" : state.revealed ? "· Answer revealed" : mine ? "· Only you can see the answer" : "· Answer hidden until revealed";
+  $("bnum").classList.toggle("more", showAns && BANK[c][2]==="more");
+  $("bnum").classList.toggle("less", showAns && BANK[c][2]==="less");
   if(has){
     const [n,q,m,cat] = BANK[c];
-    $("qtext").textContent = q; $("qcat").textContent = cat||"";
+    $("qtext").textContent = q;
+    $("qcat").textContent = (cat||"") + " \u00b7 " + (state.used||[]).length + "/" + BANK.length;
     const mod=$("mod"); mod.className="mod "+m; mod.textContent = m==="more" ? "or more" : "or less";
     $("arrow").innerHTML = m==="more"
-      ? '<svg viewBox="0 0 26 34"><path d="M13 0 L26 14 H17 V34 H9 V14 H0 Z" fill="#3fbf6e"/></svg>'
-      : '<svg viewBox="0 0 26 34"><path d="M9 0 H17 V20 H26 L13 34 L0 20 H9 Z" fill="#e5503f"/></svg>';
-  }
+      ? '<svg viewBox="0 0 26 34"><path d="M13 0 L26 14 H17 V34 H9 V14 H0 Z" fill="#4fd18a"/></svg>'
+      : '<svg viewBox="0 0 26 34"><path d="M9 0 H17 V20 H26 L13 34 L0 20 H9 Z" fill="#ff6a5c"/></svg>';
+  } else $("qcat").textContent = "";
+  if(state.drawnAt!==lastDrawn){ lastDrawn=state.drawnAt; if(has) replay($("qcard"),"enter"); }
+  const revKey = rev ? state.drawnAt : 0;
+  if(revKey!==lastRev){ lastRev=revKey; if(rev && !mine) replay($("bnum"),"pop"); replay($("strip"),"fade"); }
   tick();
-  // ----- results screen (after the reveal) -----
-  const showRes = has && state.revealed;
-  $("results").hidden = !showRes;
-  if(showRes){
-    const rl=$("rlist"); rl.replaceChildren();
-    p.filter(pl=>!r || pl.id!==r.id).forEach(pl=>{
-      const li=document.createElement("li");
-      const nm=document.createElement("span"); nm.className="rname"; nm.textContent=pl.name+(pl.id===uid?" (you)":"");
-      const num=document.createElement("span"); num.className="rnum";
-      const ch=document.createElement("span"); ch.className="chip";
+
+  // ----- status strip: who's in, then results -----
+  const strip=$("strip"); strip.replaceChildren();
+  const pill=(cls, name, val)=>{ const e=document.createElement("span"); e.className="pill "+cls; e.textContent=name;
+    if(val!==undefined && val!==null){ const v=document.createElement("span"); v.className="v"; v.textContent=val; e.append(v); } strip.append(e); };
+  const note=t=>{ const e=document.createElement("span"); e.textContent=t; strip.append(e); };
+  if(!has){ note(r ? (mine ? "Everyone's waiting on you." : "") : ""); }
+  else if(!rev){
+    if(digital && others.length){
+      const inN=others.filter(pl=>pickIdx(pl.id)>=0).length;
+      const cnt=document.createElement("span"); cnt.className="cnt"; cnt.textContent=inN+"/"+others.length+" in"; strip.append(cnt);
+      others.forEach(pl=>{ const done=pickIdx(pl.id)>=0; const e=document.createElement("span"); e.className="pill"+(done?"":" none");
+        const d=document.createElement("span"); d.className="dot"+(done?" on":""); e.append(d, document.createTextNode(pl.id===uid?"You":pl.name)); strip.append(e); });
+      if(mine && inN===others.length) note("Everyone's in. Revealing…");
+    } else note(mine ? "Read it out, then reveal when everyone's answered." : "Answer out loud!");
+  } else {
+    if(!others.length) note("No other players yet.");
+    others.forEach(pl=>{
+      const nm = pl.id===uid ? "You" : pl.name;
       if(digital){
         const i=pickIdx(pl.id), v = pl.card && i>=0 ? pl.card[i] : null;
-        num.textContent = v!==null ? v : "–";
-        if(v===null){ ch.classList.add("wait"); ch.textContent="No pick"; }
-        else if(exactFor(pl)){ ch.classList.add("exact"); ch.textContent = pl.bonus===state.drawnAt ? "Exact · bonus used" : bonusLeft()>0 ? "Exact! Bonus pick" : "Exact"; }
-        else if(fits(v)){ ch.classList.add("yes"); ch.textContent="Correct"; }
-        else { ch.classList.add("no"); ch.textContent="Missed"; }
+        if(v===null) pill("none", nm, "\u2013");
+        else if(exactFor(pl)) pill("exact", nm+" \u2605", v);
+        else if(fits(v)) pill("yes", nm+" \u2713", v);
+        else pill("no", nm+" \u2717", v);
       } else {
         const pressed = pickOf(pl.id)==="yes";
-        ch.classList.add(pressed?"yes":"wait"); ch.textContent = pressed ? "Pressed" : "Not yet";
+        pill(pressed?"yes":"none", nm+(pressed?" \u2713":""));
       }
-      li.append(nm,num,ch); rl.append(li);
     });
-    if(!rl.children.length){ const li=document.createElement("li"); li.textContent="No other players yet."; rl.append(li); }
   }
-  // ----- reader controls -----
+
+  // ----- reader actions: one clear button per stage -----
   const waitingBonus = digital && p.some(bonusOpenFor);
   $("readerCtl").hidden = !mine;
-  $("drawBtn").hidden = has;
-  $("revealBtn").hidden = !has || state.revealed;
-  $("skipBtn").hidden = !has || state.revealed;
-  $("passBtn").hidden = !has || !state.revealed;
+  const stage = !has ? "draw" : !rev ? "ask" : "next";
+  if(stage!==lastStage){ lastStage=stage; replay($("readerCtl"),"swap"); }
+  $("drawBtn").hidden = stage!=="draw";
+  $("revealBtn").hidden = stage!=="ask";
+  $("skipBtn").hidden = stage!=="ask";
+  $("passBtn").hidden = stage!=="next";
   $("passBtn").disabled = waitingBonus;
-  $("passBtn").textContent = waitingBonus ? "Waiting for bonus picks… "+Math.ceil(bonusLeft()/1000)+"s" : "Pass to next reader";
-  $("watchMsg").textContent = (!mine && r) ? (has? (state.revealed? r.name+" will pass to the next reader." : "Answer out loud! "+r.name+" will reveal the number.") : "") : "";
-  // ----- answered dots: who has locked in a pick -----
-  const showDots = digital && has && !state.revealed;
-  $("answered").hidden = !showDots;
-  if(showDots){
-    const box=$("answered"); box.replaceChildren();
-    const others = p.filter(pl=>!r || pl.id!==r.id);
-    let n=0;
-    others.forEach(pl=>{
-      const done = pickIdx(pl.id)>=0; if(done) n++;
-      const w=document.createElement("span"); w.className="who"; w.title=pl.name+(done?" has answered":" hasn't answered yet");
-      const d=document.createElement("span"); d.className="dot"+(done?" on":"");
-      const t=document.createElement("span"); t.textContent=pl.name;
-      w.append(d,t); box.append(w);
-    });
-    const c2=document.createElement("span"); c2.style.fontWeight="700"; c2.textContent=n+" of "+others.length+" answered";
-    box.prepend(c2);
-  }
+  $("passBtn").textContent = waitingBonus ? "Bonus picks\u2026 "+Math.ceil(bonusLeft()/1000)+"s" : nx ? "Next question \u2192 "+(nx.id===uid?"you":nx.name) : "Next question";
+
   // ----- paper cards: "Number pressed" -----
-  $("markBox").hidden = !showRes || !inGame || digital || mine;
-  if(showRes && !digital){
+  $("markYes").hidden = !rev || !inGame || digital || mine;
+  if(rev && !digital){
     const pressed = pickOf(uid)==="yes";
     $("markYes").classList.toggle("sel", pressed);
     $("markYes").textContent = pressed ? "Number pressed \u2713  (tap to undo)" : "Number pressed";
   }
+
   // ----- digital card -----
   const myCard = digital && m0 && m0.card && (m0.round||0)===(settings.round||0) ? m0.card : null;
   const lines = myCard ? doneLines(myCard, m0.marked) : [];
@@ -691,14 +764,14 @@ function render(){
   $("cardBox").hidden = !myCard;
   if(myCard){
     const pi = pickIdx(uid), marked=m0.marked||{}, misses=m0.misses||{};
-    const pickOpen = has && !state.revealed && !mine && !timeUp();
+    const pickOpen = has && !rev && !mine && !timeUp();
     const grid=$("grid"); grid.replaceChildren();
     myCard.forEach((num,i)=>{
       const b=document.createElement("button"); b.type="button"; b.className="sq"; b.id="sq"+i; b.textContent=num;
       let label=String(num);
       if(marked[i]){ b.classList.add("hit"); label+=", correct"; }
       else if(misses[i]){ b.classList.add("miss"); label+=", wrong"; }
-      else if(!state.revealed && i===pi){ b.classList.add("pick"); label+=", your pick"; }
+      else if(!rev && i===pi){ b.classList.add("pick"); label+=", your pick"; }
       if(winSet.has(i)) b.classList.add("win");
       const can = !marked[i] && (pickOpen || myBonus);
       if(myBonus && can) b.classList.add("open");
@@ -707,19 +780,19 @@ function render(){
       b.onclick = myBonus ? ()=>useBonus(i) : ()=>tapSquare(i);
       grid.append(b);
     });
-    $("cardCount").textContent = Object.keys(marked).length+" correct \u00b7 "+lines.length+" of "+LINES_TO_WIN+" lines";
+    $("cardCount").textContent = Object.keys(marked).length+" correct \u00b7 "+lines.length+"/"+LINES_TO_WIN+" lines";
     let msg;
     if(line) msg="Two lines! Tap BINGO.";
-    else if(myBonus) msg="Exact answer! Tap any number to claim it as a bonus.";
-    else if(!has) msg = lines.length===1 ? "One line done. One more for Bingo!" : "When a question is drawn, tap the number you think is the answer.";
-    else if(mine && !state.revealed) msg="You're reading this one, so no pick for you this round.";
-    else if(!state.revealed) msg = timeUp() ? (pi>=0 ? "Time's up. Locked in "+myCard[pi]+"." : "Time's up. No pick this round.")
-                                : pi>=0 ? "Locked in "+myCard[pi]+". Tap another number to change it, or tap it again to clear." : "Tap the number you think is the answer. Exact answers earn a bonus number.";
-    else if(pi>=0 && exactFor(m0)) msg = m0.bonus===state.drawnAt ? "Exact answer! Bonus number claimed." : "Exact answer! The bonus window has closed.";
+    else if(myBonus) msg="";
+    else if(!has) msg = lines.length===1 ? "One line done. One more for Bingo!" : "";
+    else if(mine && !rev) msg="You're reading, so no pick this round.";
+    else if(!rev) msg = timeUp() ? (pi>=0 ? "Time's up. Locked in "+myCard[pi]+"." : "Time's up.")
+                      : pi>=0 ? "Locked in "+myCard[pi]+". Tap to change." : "Tap your answer. Exact answers earn a bonus.";
+    else if(pi>=0 && exactFor(m0)) msg = m0.bonus===state.drawnAt ? "Exact! Bonus claimed." : "Exact!";
     else if(pi>=0 && fits(myCard[pi])) msg="Correct! "+myCard[pi]+" is yours.";
-    else if(pi>=0) msg="Not this time. Your reds clear when it's your turn to read.";
-    else msg = mine ? "You read this one." : "No pick this round.";
-    if(lines.length===1 && !line && has && state.revealed && !myBonus) msg+=" One line done!";
+    else if(pi>=0) msg="Not this time.";
+    else msg = mine ? "" : "No pick this round.";
+    if(lines.length===1 && !line && rev && !myBonus) msg+=" One line done!";
     $("cardMsg").textContent = msg;
   }
   // ----- bingo: full-screen -----
@@ -770,7 +843,7 @@ function syncMe(){
 }
 
 async function saveState(patch){
-  try{ await update(stateRef, patch); }catch(e){ $("watchMsg").textContent="Couldn't update the game. Try again."; }
+  try{ await update(stateRef, patch); }catch(e){ $("strip").textContent="Couldn't update the game. Try again."; }
 }
 async function saveSettings(patch){
   try{ await update(settingsRef, patch); }catch(e){ $("hostNote").textContent="Only the host can change settings."; }
@@ -782,10 +855,27 @@ function drawIndex(){
   const pick = pool[Math.floor(Math.random()*pool.length)];
   return {pick, used:[...used, pick]};
 }
-$("drawBtn").onclick=()=>{ const d=drawIndex(); saveState({card:d.pick, used:d.used, revealed:false, drawnAt:serverNow()}); };
-$("skipBtn").onclick=()=>{ const d=drawIndex(); saveState({card:d.pick, used:d.used, revealed:false, drawnAt:serverNow()}); };
-$("revealBtn").onclick=()=>saveState({revealed:true, revealedAt:serverNow()});
-$("passBtn").onclick=()=>{ if(digital_waiting()) return; saveState({turn:(state.turn||0)+1, card:null, revealed:false, revealedAt:0, drawnAt:0}); };
+const draw=()=>{ const d=drawIndex(); return {card:d.pick, used:d.used, revealed:false, revealedAt:0, drawnAt:serverNow()}; };
+$("drawBtn").onclick=()=>saveState(draw());
+$("skipBtn").onclick=()=>saveState(draw());
+const reveal=()=>{ if(hasCard() && !state.revealed) saveState({revealed:true, revealedAt:serverNow()}); };
+$("revealBtn").onclick=reveal;
+/* one tap hands the turn on AND puts the next question in front of the next reader */
+$("passBtn").onclick=()=>{ if(digital_waiting()) return; saveState({turn:(state.turn||0)+1, ...draw()}); };
+/* reader's phone reveals by itself once every player has locked in, or when the timer runs out */
+let autoFor=0, autoTimer=null;
+function autoReveal(){
+  if(!amReader() || !hasCard() || state.revealed || autoFor===state.drawnAt) return;
+  const others=players.filter(pl=>pl.id!==uid);
+  const allIn = settings.digital && others.length>0 && others.every(pl=>pickIdx(pl.id)>=0);
+  if(!allIn && !timeUp()) return;
+  autoFor=state.drawnAt; const key=state.drawnAt;
+  clearTimeout(autoTimer);
+  autoTimer=setTimeout(()=>{
+    const still = settings.digital && others.every(pl=>pickIdx(pl.id)>=0);
+    if(state.drawnAt===key && !state.revealed && (still || timeUp())) reveal(); else autoFor=0;
+  }, allIn ? 1500 : 400);
+}
 function digital_waiting(){ return !!settings.digital && players.some(bonusOpenFor); }
 async function setPick(v){
   try{ await set(child(picksRef, uid), v===null ? null : {q:state.drawnAt, v}); }
@@ -810,16 +900,19 @@ function tick(){
   if(playing()){
     const m0=me(), open=!!m0 && bonusOpenFor(m0), anyOpen=!!settings.digital && players.some(bonusOpenFor);
     if(open) $("bonusSecs").textContent=Math.ceil(bonusLeft()/1000)+"s";
-    if(anyOpen && amReader()) $("passBtn").textContent="Waiting for bonus picks… "+Math.ceil(bonusLeft()/1000)+"s";
+    if(anyOpen && amReader()) $("passBtn").textContent="Bonus picks\u2026 "+Math.ceil(bonusLeft()/1000)+"s";
+    autoReveal();
     if(bonusWasOpen && !anyOpen){ bonusWasOpen=false; render(); return; }
     bonusWasOpen = anyOpen;
   }
   const t=$("timer"), secs=Number(settings.timerSecs)||0;
   const active = secs>0 && hasCard() && !state.revealed && state.drawnAt;
-  t.hidden=!active; if(!active) return;
-  const left=Math.max(0, Math.ceil((state.drawnAt + secs*1000 - serverNow())/1000));
+  t.hidden=!active; $("tbar").hidden=!active; if(!active) return;
+  const ms=Math.max(0, state.drawnAt + secs*1000 - serverNow());
+  $("tfill").style.width=(100*ms/(secs*1000))+"%"; $("tbar").classList.toggle("low", ms<=5000);
+  const left=Math.ceil(ms/1000);
   if(left===0){ t.className="timer up"; t.textContent="Time's up!"; if(beepedFor!==state.drawnAt){ beepedFor=state.drawnAt; if(serverNow()-state.drawnAt < secs*1000+3000) beep(); } }
-  else { t.className="timer"+(left<=5?" low":""); t.textContent="0:"+String(left).padStart(2,"0"); }
+  else { t.className="timer"+(left<=5?" low":""); t.textContent=left+"s"; }
 }
 setInterval(tick, 250);
 
@@ -873,7 +966,8 @@ async function tapSquare(i){
 /* host: fresh deck, turns and cards; phase decides lobby vs playing */
 async function newGame(phase){
   if(!isHost()) return;
-  await saveState({...STATE0, used:null, bingo:null, card:null});
+  const first = phase==="playing" ? (()=>{ const pick=Math.floor(Math.random()*BANK.length); return {card:pick, used:[pick], drawnAt:serverNow()}; })() : {card:null, used:null, drawnAt:0};
+  await saveState({...STATE0, bingo:null, ...first});
   await saveSettings({round:serverNow(), phase});     // every phone deals itself a fresh card
 }
 
@@ -980,6 +1074,7 @@ $("shareBtn").onclick=async()=>{
   try{ await navigator.clipboard.writeText(url); sm.textContent="Invite link copied: "+url; }
   catch(e){ sm.textContent="Invite link: "+url; }
 };
+$("gInvite").onclick=()=>$("shareBtn").onclick();
 addEventListener("hashchange", ()=>{ const h=location.hash.slice(1).toUpperCase(); if(uid && h && h!==room) enterRoom(h); });
 
 render();
@@ -990,7 +1085,7 @@ if(!configured){
   db = getDatabase(app);
   const auth = getAuth(app);
   onValue(ref(db, ".info/serverTimeOffset"), s=>{ serverOffset = Number(s.val())||0; });
-  onValue(ref(db, ".info/connected"), s=>{ if(ready) $("status").textContent = s.val() ? "Live. Every phone updates automatically." : "Reconnecting…"; });
+  onValue(ref(db, ".info/connected"), s=>{ if(ready){ $("status").textContent = s.val() ? "Live. Every phone updates automatically." : "Reconnecting…"; render(); } });
   let started=false;
   onAuthStateChanged(auth, u=>{
     if(!u || started) return;

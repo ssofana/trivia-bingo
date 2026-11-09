@@ -16,21 +16,21 @@ Once the game starts, the lobby (player list, settings, Switch game) is hidden s
 
 ## How to play
 
-1. **Draw.** The current reader taps **Draw a question**.
+The game screen fits on one phone screen: who's reading (top bar), the question card, a status line, the reader's button, and your card.
+
+1. **Question.** When the host starts the game, the first question appears straight away.
    - The reader sees the full card: question, number, and **or more** / **or less**.
    - Everyone else sees only the question. The number stays hidden as "?".
+   - If the **timer** is on, a countdown bar runs along the top of the card.
 2. **Answer.**
-   - **Digital cards:** tap the number on your card you think is the answer. It turns purple-grey, and you can change it until the reveal. The reader doesn't pick.
-   - **Paper cards:** call out answers as usual.
-   - If the **timer** is on, a countdown runs on every phone and picks lock at zero.
-   - **Digital:** small dots under the reader's buttons show who has answered; a dot turns green once that player locks in a pick.
-3. **Reveal.** The reader taps **Reveal answer to everyone**.
-   - **Digital:** a correct pick turns **green** and stays. A wrong pick turns **red**.
-   - **Exact answer bonus:** pick the *exact* number (not just inside the range) and you get **10 seconds to claim a second number**, any square on your card. The reader's Pass button waits until bonus picks are done or time runs out.
-   - A **results screen** under the question shows each player's pick: **Exact**, **Correct**, **Missed** or **No pick**.
-   - **Paper:** if you got it right and marked your board, tap **Number pressed**.
-4. **Pass.** The reader taps **Pass to next reader**.
-5. **Bingo.** Tap **BINGO!** when you win. A full-screen winner screen with confetti appears on every phone, and the host chooses **Replay** or **Back to lobby**.
+   - **Digital:** tap the number on your card you think is the answer. It turns purple-grey, and you can change it until the reveal. The status line shows who's in, e.g. "2/3 in ● Nick ● Mom ○ Dad".
+   - **Paper:** call out answers as usual.
+3. **Reveal.** The reader taps **Reveal answer**, or it happens automatically once every player has locked in (digital) or when the timer runs out.
+   - **Digital:** a correct pick turns **green** and stays; a wrong pick turns **red**. The status line becomes the results: ★ exact, ✓ correct, ✗ missed.
+   - **Exact answer bonus:** pick the *exact* number and you get **10 seconds to claim a second number**, any square on your card.
+   - **Paper:** if you got it right, tap **Number pressed**.
+4. **Next.** The reader taps **Next question → Nick**. That one tap hands the turn to the next reader and puts their question on screen, so there's no separate draw step. It waits while bonus picks are open.
+5. **Bingo.** Tap **BINGO!** when you win. A full-screen gold winner screen with confetti appears on every phone, and the host chooses **Replay** or **Back to lobby**.
 
 ### "Or more" and "or less"
 Every card has a direction. For **19 or less**, any number from 1 to 19 is correct. For **12 or more**, any number from 12 to 31. Picking the exact answer is always safe. Picking near it works only if you guess the direction right.
