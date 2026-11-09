@@ -94,6 +94,11 @@ button:disabled{opacity:.45;cursor:default}
 .qcard.round .rule{width:78%}
 .qcard.round .mod{font-size:clamp(17px,5vw,22px)}
 .qcard.round .qempty{padding-top:12%}
+/* who has answered (digital), under the reader's buttons */
+.answered{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;justify-content:center;font-size:12px;color:var(--muted)}
+.answered .who{display:inline-flex;align-items:center;gap:5px;max-width:9em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dot{width:10px;height:10px;border-radius:50%;border:1.5px solid var(--muted);flex:none;box-sizing:border-box}
+.dot.on{background:var(--more);border-color:var(--more)}
 /* results screen */
 .results{width:100%;max-width:460px;box-sizing:border-box;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
 .results h3{margin:0;font-family:var(--display);font-weight:400;font-size:16px}
@@ -264,6 +269,7 @@ li.cur .num{background:var(--ball);border-color:var(--ball);color:var(--ball-ink
     <button class="pri" id="passBtn" type="button" hidden>Pass to next reader</button>
     <button class="ghost" id="skipBtn" type="button" hidden>Skip this question</button>
   </div>
+  <div class="answered" id="answered" hidden aria-live="polite"></div>
   <p class="msg" id="watchMsg"></p>
 
   <section class="panel" id="markBox" hidden>
@@ -326,96 +332,178 @@ const BANK = [
  [1, "The only positive whole number that is neither prime nor composite", "more", "Math"],
  [1, "The number of countries that border Portugal", "more", "Geography"],
  [1, "The number of US presidents who have resigned from office", "more", "History"],
+ [1, "Points for a made free throw in basketball", "more", "Basketball"],
+ [1, "The number of kings each player starts with in chess", "more", "Games"],
+ [1, "The number of eyes a Cyclops has in Greek myth", "more", "Fun facts"],
  [2, "The number of landlocked countries in South America", "less", "Geography"],
  [2, "The number of Best Actor Oscars won by Tom Hanks", "more", "Movies"],
  [2, "The only even prime number", "less", "Math"],
+ [2, "Points for a basket made inside the three-point line", "less", "Basketball"],
+ [2, "Tributes chosen from each district in The Hunger Games", "more", "Movies"],
+ [2, "The number of humps on a Bactrian camel", "less", "Fun facts"],
  [3, "The number of singers in Destiny's Child's best-known lineup", "more", "Pop culture"],
  [3, "The number of oceans that touch Canada's coastline", "less", "Geography"],
  [3, "The number of ships Columbus sailed with in 1492", "more", "History"],
+ [3, "Points for a shot made from behind the arc", "more", "Basketball"],
+ [3, "Outs in each half-inning of baseball", "less", "Baseball"],
+ [3, "How many in a row you need to win tic-tac-toe", "more", "Games"],
  [4, "The square root of 16", "less", "Math"],
  [4, "The number of houses at Hogwarts", "more", "Movies"],
  [4, "The number of countries that make up the United Kingdom", "less", "Geography"],
+ [4, "Bases on a baseball diamond, counting home plate", "less", "Baseball"],
+ [4, "Quarters in an NBA game", "more", "Basketball"],
+ [4, "The number of Teenage Mutant Ninja Turtles", "less", "Pop culture"],
  [5, "The number of permanent members of the UN Security Council", "more", "History"],
  [5, "The number of Platonic solids", "less", "Math"],
  [5, "The number of members in One Direction when the band formed", "more", "Pop culture"],
+ [5, "Dice used in a game of Yahtzee", "more", "Games"],
+ [5, "The number of Spice Girls", "less", "Pop culture"],
+ [5, "Arms on a typical starfish", "more", "Fun facts"],
  [6, "The number of Infinity Stones in the Marvel movies", "less", "Movies"],
  [6, "The number of wives Henry VIII had", "more", "History"],
  [6, "The smallest perfect number", "less", "Math"],
+ [6, "The personal foul that disqualifies an NBA player", "less", "Basketball"],
+ [6, "Players per side on the ice in hockey, including the goalie", "more", "Sports"],
+ [6, "Main friends in the TV show Friends", "less", "Pop culture"],
  [7, "The number of countries in Central America", "more", "Geography"],
  [7, "The number of members in BTS", "less", "Pop culture"],
  [7, "The number of books in the main Harry Potter series", "more", "Movies"],
+ [7, "Tiles each player starts with in Scrabble", "more", "Games"],
+ [7, "The most games a World Series can last", "less", "Baseball"],
+ [7, "Dwarfs in Disney's Snow White", "more", "Movies"],
  [8, "The number of years Barack Obama served as president", "less", "History"],
  [8, "The cube root of 512", "more", "Math"],
  [8, "The number of films in the main Harry Potter film series", "less", "Movies"],
+ [8, "Arms on an octopus", "less", "Fun facts"],
+ [8, "Rowers in an Olympic “eight” boat, not counting the cox", "more", "Sports"],
+ [8, "Kobe Bryant's first jersey number with the Lakers", "less", "Basketball"],
  [9, "The number of films in the Star Wars Skywalker saga", "more", "Movies"],
  [9, "The number of provinces in South Africa", "less", "Geography"],
  [9, "The number of zeros in one billion", "more", "Math"],
+ [9, "Players in a baseball batting order", "more", "Baseball"],
+ [9, "Different digits used in Sudoku", "less", "Games"],
+ [9, "Symphonies Beethoven completed", "more", "Fun facts"],
  [10, "The number of amendments in the US Bill of Rights", "less", "History"],
  [10, "The number of seasons of Friends", "more", "Pop culture"],
  [10, "The number of edges on a pentagonal pyramid", "more", "Math"],
+ [10, "Legs on a crab, counting its claws", "less", "Fun facts"],
+ [10, "Frames in a game of ten-pin bowling", "more", "Sports"],
+ [10, "The UK prime minister's house number on Downing Street", "less", "Pop culture"],
  [11, "The month (as a number) when the WWI armistice was signed", "less", "History"],
  [11, "The number of Oscars won by Titanic", "more", "Movies"],
  [11, "The smallest two-digit prime number", "less", "Math"],
+ [11, "Thieves in the 2001 heist movie “Ocean's __”", "more", "Movies"],
+ [11, "The Stranger Things hero who is named after a number", "less", "Pop culture"],
+ [11, "Players per side on a field hockey pitch", "more", "Sports"],
  [12, "The number of people who have walked on the Moon", "more", "History"],
  [12, "The number of edges on a cube", "less", "Math"],
  [12, "The number of countries in South America", "more", "Geography"],
+ [12, "Pairs of ribs in the human body", "less", "Fun facts"],
+ [12, "Angry Men in the classic courtroom film", "more", "Movies"],
+ [12, "Animals in the Chinese zodiac", "more", "Fun facts"],
  [13, "The number of provinces and territories in Canada", "less", "Geography"],
  [13, "The Fibonacci number that comes right after 8", "more", "Math"],
  [13, "Taylor Swift's famous lucky number", "less", "Pop culture"],
+ [13, "Cards dealt to each player in bridge", "less", "Games"],
+ [13, "Players per side in rugby league", "more", "Sports"],
+ [13, "The 2007 sequel “Ocean's __”", "less", "Movies"],
  [14, "The regnal number of France's “Sun King” Louis", "more", "History"],
  [14, "The number of mountains on Earth taller than 8,000 metres", "less", "Geography"],
  [14, "The lowest common multiple of 2 and 7", "more", "Math"],
+ [14, "February's date for Valentine's Day", "more", "Pop culture"],
+ [14, "Tiles in a winning Mahjong hand", "less", "Games"],
+ [14, "Teams in the NBA draft lottery", "more", "Basketball"],
  [15, "The number of republics in the former Soviet Union", "more", "History"],
  [15, "The fifth triangular number", "less", "Math"],
  [15, "The minutes of fame Andy Warhol said everyone would get", "more", "Pop culture"],
+ [15, "The first point won in a tennis game", "less", "Sports"],
+ [15, "Sliding tiles in the classic “fifteen puzzle”", "more", "Games"],
+ [15, "Standard contracts allowed on an NBA roster", "less", "Basketball"],
  [16, "Abraham Lincoln's number in the order of US presidents", "less", "History"],
  [16, "2 to the power of 4", "more", "Math"],
  [16, "The number of states in Germany", "less", "Geography"],
+ [16, "Teams in the NBA playoff bracket, not counting the play-in", "more", "Basketball"],
+ [16, "Teams in each NFL conference", "less", "Sports"],
+ [16, "The birthday Molly Ringwald forgets about in “__ Candles”", "less", "Movies"],
  [17, "The 7th prime number", "more", "Math"],
  [17, "The number of autonomous communities in Spain", "less", "Geography"],
  [17, "The century in which the Mayflower sailed to America", "more", "History"],
+ [17, "Zac Efron's body-swap comedy “__ Again”", "more", "Movies"],
+ [17, "Regular-season games each NFL team plays", "less", "Sports"],
+ [17, "Sustainable Development Goals adopted by the UN", "less", "Fun facts"],
  [18, "The number of the US amendment that started Prohibition", "less", "History"],
  [18, "The number of edges on a hexagonal prism", "more", "Math"],
  [18, "The number of regions in France, including overseas", "less", "Geography"],
+ [18, "Peyton Manning's jersey number", "more", "Sports"],
+ [18, "Pokémon types in the main games", "more", "Games"],
+ [18, "The age of majority in Ontario", "less", "Fun facts"],
  [19, "The century in which Canadian Confederation happened", "more", "History"],
  [19, "The 8th prime number", "less", "Math"],
  [19, "The title of Adele's debut album", "more", "Pop culture"],
+ [19, "The minimum age to be drafted into the NBA", "less", "Basketball"],
+ [19, "The “impossible” cribbage hand players joke about", "more", "Games"],
  [20, "The number of faces on an icosahedron", "less", "Math"],
  [20, "The number of regions in Italy", "more", "Geography"],
  [20, "Thousands of leagues in the title of Jules Verne's undersea novel", "less", "Books"],
+ [20, "The number at the top of a standard dartboard", "more", "Games"],
+ [20, "Questions allowed in the classic guessing game", "less", "Pop culture"],
+ [20, "Standard amino acids the human body uses to build proteins", "more", "Fun facts"],
  [21, "The title of Adele's second album", "more", "Pop culture"],
  [21, "The 8th number in the Fibonacci sequence (1, 1, 2, 3…)", "less", "Math"],
  [21, "The century we are living in now", "more", "History"],
+ [21, "Tim Duncan's jersey number with the Spurs", "less", "Basketball"],
+ [21, "The street in the Channing Tatum comedy “__ Jump Street”", "more", "Movies"],
+ [21, "The legal drinking age in the United States", "less", "Fun facts"],
  [22, "The number of the US amendment limiting presidents to two terms", "less", "History"],
  [22, "The Taylor Swift song about “feeling” this age", "more", "Pop culture"],
  [22, "The top number of the fraction often used for pi, __/7", "more", "Math"],
+ [22, "The sequel “__ Jump Street”", "more", "Movies"],
+ [22, "Coloured street properties on a Monopoly board", "less", "Games"],
  [23, "The smallest prime number greater than 20", "less", "Math"],
  [23, "The number in the title of Jim Carrey's 2007 thriller “The Number __”", "more", "Movies"],
  [23, "The number of provinces in Argentina", "less", "Geography"],
+ [23, "LeBron James' jersey number with the Cleveland Cavaliers", "more", "Basketball"],
+ [23, "People needed in a room for a 50/50 chance two share a birthday", "less", "Fun facts"],
+ [23, "David Beckham's jersey number at Real Madrid", "more", "Sports"],
  [24, "The standard frames per second of cinema film", "more", "Movies"],
  [24, "4 factorial (4!)", "less", "Math"],
  [24, "The title of the Kiefer Sutherland show where each season covers one day", "more", "Pop culture"],
+ [24, "Kobe Bryant's second jersey number with the Lakers", "less", "Basketball"],
+ [24, "Seconds on the NBA shot clock", "more", "Basketball"],
+ [24, "Triangular points on a backgammon board", "less", "Games"],
  [25, "Queen Elizabeth II's age when she became queen", "less", "History"],
  [25, "The sum of the first five odd numbers", "more", "Math"],
  [25, "The title of Adele's third album", "less", "Pop culture"],
+ [25, "Barry Bonds' jersey number with the San Francisco Giants", "more", "Baseball"],
+ [25, "Letter cubes in a Big Boggle grid", "less", "Games"],
  [26, "The number of cantons in Switzerland", "more", "Geography"],
  [26, "The only number sitting between a perfect square and a perfect cube", "less", "Math"],
  [26, "The number of full miles in a marathon", "more", "Sports"],
+ [26, "Different letters on Scrabble tiles, not counting blanks", "more", "Games"],
+ [26, "Bones in one human foot", "less", "Fun facts"],
  [27, "The number of years Nelson Mandela spent in prison", "less", "History"],
  [27, "3 cubed", "more", "Math"],
  [27, "The number of countries in the European Union", "more", "Geography"],
+ [27, "Outs a team must record to win a regulation 9-inning game", "more", "Baseball"],
  [28, "The second perfect number", "less", "Math"],
  [28, "The Sandra Bullock rehab movie “__ Days”", "more", "Movies"],
  [28, "The number of countries in the EU just before Brexit", "less", "History"],
+ [28, "Adult teeth, not counting wisdom teeth", "more", "Fun facts"],
+ [28, "The zombie movie “__ Days Later”", "less", "Movies"],
  [29, "The 10th prime number", "more", "Math"],
  [29, "Mount Everest's height in thousands of feet, rounded down", "less", "Geography"],
  [29, "The number of days in February 2024", "more", "History"],
+ [29, "Letters in the Danish alphabet", "less", "Fun facts"],
  [30, "The title of Adele's fourth album", "less", "Pop culture"],
  [30, "The number of edges on a dodecahedron", "more", "Math"],
  [30, "Jennifer Garner's “13 Going on __”", "less", "Movies"],
+ [30, "Stephen Curry's jersey number", "more", "Basketball"],
+ [30, "Teams in Major League Baseball", "less", "Baseball"],
+ [30, "Teams in the NBA", "more", "Basketball"],
  [31, "The 11th prime number", "less", "Math"],
  [31, "The number of states in Mexico, not counting Mexico City", "less", "Geography"],
- [31, "The number of flavours Baskin-Robbins is famous for", "less", "Pop culture"]
+ [31, "The number of flavours Baskin-Robbins is famous for", "less", "Pop culture"],
+ [31, "Days in July", "less", "Fun facts"]
 ];
 
 const $=id=>document.getElementById(id);
@@ -545,6 +633,23 @@ function render(){
   $("passBtn").disabled = waitingBonus;
   $("passBtn").textContent = waitingBonus ? "Waiting for bonus picks… "+Math.ceil(bonusLeft()/1000)+"s" : "Pass to next reader";
   $("watchMsg").textContent = (!mine && r) ? (has? (state.revealed? r.name+" will pass to the next reader." : "Answer out loud! "+r.name+" will reveal the number.") : "") : "";
+  // ----- answered dots: who has locked in a pick -----
+  const showDots = digital && has && !state.revealed;
+  $("answered").hidden = !showDots;
+  if(showDots){
+    const box=$("answered"); box.replaceChildren();
+    const others = p.filter(pl=>!r || pl.id!==r.id);
+    let n=0;
+    others.forEach(pl=>{
+      const done = pickIdx(pl.id)>=0; if(done) n++;
+      const w=document.createElement("span"); w.className="who"; w.title=pl.name+(done?" has answered":" hasn't answered yet");
+      const d=document.createElement("span"); d.className="dot"+(done?" on":"");
+      const t=document.createElement("span"); t.textContent=pl.name;
+      w.append(d,t); box.append(w);
+    });
+    const c2=document.createElement("span"); c2.style.fontWeight="700"; c2.textContent=n+" of "+others.length+" answered";
+    box.prepend(c2);
+  }
   // ----- paper cards: "Number pressed" -----
   $("markBox").hidden = !showRes || !inGame || digital || mine;
   if(showRes && !digital){

@@ -23,6 +23,7 @@ Once the game starts, the lobby (player list, settings, Switch game) is hidden s
    - **Digital cards:** tap the number on your card you think is the answer. It turns purple-grey, and you can change it until the reveal. The reader doesn't pick.
    - **Paper cards:** call out answers as usual.
    - If the **timer** is on, a countdown runs on every phone and picks lock at zero.
+   - **Digital:** small dots under the reader's buttons show who has answered; a dot turns green once that player locks in a pick.
 3. **Reveal.** The reader taps **Reveal answer to everyone**.
    - **Digital:** a correct pick turns **green** and stays. A wrong pick turns **red**.
    - **Exact answer bonus:** pick the *exact* number (not just inside the range) and you get **10 seconds to claim a second number**, any square on your card. The reader's Pass button waits until bonus picks are done or time runs out.
@@ -72,7 +73,7 @@ Other players see who the host is and can only **Leave** themselves.
 
 ## Question deck
 
-There are 93 questions, three for every number from 1 to 31, across **Math, Geography, History, Movies, Pop culture**, plus a few **Books** and **Sports**. A card won't repeat until the whole deck has been used.
+There are 175 questions, at least four for every number from 1 to 31, across **Math, Geography, History, Movies, Pop culture, Sports, Basketball, Baseball, Games** and **Fun facts**. A card won't repeat until the whole deck has been used.
 
 ### Edit or add questions
 In `index.html`, find `const BANK = [`. Each line is one card:
