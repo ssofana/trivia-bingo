@@ -22,16 +22,17 @@
   --bg:#f3f1fb; --card:#ffffff; --fg:#1d1838; --muted:#6c6790; --line:#dcd8ee;
   --ball:#e2403a; --ball-ink:#ffffff; --accent:#3b37c9; --accent-ink:#ffffff;
   --up:#fff4c7; --up-line:#e9c64a; --more:#1f8a4c; --less:#c2362f; 
+  --pick:#d9d5ec; --pick-line:#7f79ad; --more-ink:#ffffff;
   --display:"Bungee", "Arial Black", system-ui, sans-serif;
   --body:"Figtree", -apple-system, system-ui, sans-serif;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#14112a; --card:#1f1b3d; --fg:#efedfb; --muted:#a29dc6; --line:#353061;
-  --ball:#ff5c55; --ball-ink:#1a0f0f; --accent:#8e8bff; --accent-ink:#14112a;
+  --ball:#ff5c55; --ball-ink:#1a0f0f; --accent:#8e8bff; --accent-ink:#14112a; --pick:#3a355f; --pick-line:#8b85c4; --more-ink:#0d2a19;
   --up:#3a3214; --up-line:#c9a634; --more:#4fd18a; --less:#ff7b73; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#14112a; --card:#1f1b3d; --fg:#efedfb; --muted:#a29dc6; --line:#353061;
-  --ball:#ff5c55; --ball-ink:#1a0f0f; --accent:#8e8bff; --accent-ink:#14112a;
+  --ball:#ff5c55; --ball-ink:#1a0f0f; --accent:#8e8bff; --accent-ink:#14112a; --pick:#3a355f; --pick-line:#8b85c4; --more-ink:#0d2a19;
   --up:#3a3214; --up-line:#c9a634; --more:#4fd18a; --less:#ff7b73; color-scheme:dark}
 html,body{background:var(--bg);color:var(--fg);margin:0}
 *{-webkit-tap-highlight-color:transparent}
@@ -125,11 +126,12 @@ li.cur .num{background:var(--ball);border-color:var(--ball);color:var(--ball-ink
 .grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
 .sq{aspect-ratio:1;max-width:100%;border-radius:12px;background:var(--bg);border:1.5px solid var(--line);color:var(--fg);font-weight:800;font-size:clamp(16px,5.4vw,22px);font-variant-numeric:tabular-nums;padding:0;display:grid;place-items:center}
 .sq:disabled{cursor:default;opacity:1}
-.sq.on{background:var(--ball);border-color:var(--ball);color:var(--ball-ink);border-radius:50%}
-.sq.can{border:2.5px solid var(--more);color:var(--more);background:var(--card)}
-.sq.cur{outline:3px solid var(--up-line);outline-offset:2px}
-.sq.win{background:var(--up-line);border-color:var(--up-line);color:#1d1838}
-@media (prefers-reduced-motion:no-preference){.sq.can{animation:glow 1.4s ease-in-out infinite}@keyframes glow{50%{box-shadow:0 0 0 4px color-mix(in srgb,var(--more) 25%,transparent)}}}
+.sq.pick{background:var(--pick);border:2.5px solid var(--pick-line);color:var(--fg)}
+.sq.hit{background:var(--more);border-color:var(--more);color:var(--more-ink)}
+.sq.miss{background:var(--ball);border-color:var(--ball);color:var(--ball-ink)}
+.sq.win{background:var(--more);border:3px solid var(--up-line);color:var(--more-ink);box-shadow:0 0 0 2px var(--up-line)}
+.chip.pick{background:var(--pick);color:var(--fg);border:1.5px solid var(--pick-line)}
+@media (prefers-reduced-motion:no-preference){.sq.hit,.sq.miss{animation:pop .35s ease-out}@keyframes pop{0%{transform:scale(.85)}60%{transform:scale(1.08)}100%{transform:none}}}
 .cardhead{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
 #confetti{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:50}
 .setup{background:var(--up);border:2px solid var(--up-line);border-radius:14px;padding:14px;font-size:15px}
@@ -415,30 +417,36 @@ function render(){
   $("cardBox").hidden = !myCard;
   if(myCard){
     const cur = (state.marks||{})[myId];
-    const curIdx = typeof cur==="string" && cur.startsWith("sq") ? Number(cur.slice(2)) : -1;
-    const marked = me.marked||{};
+    const pickIdx = typeof cur==="string" && cur.startsWith("sq") ? Number(cur.slice(2)) : -1;
+    const marked = me.marked||{}, misses = me.misses||{};
+    const open = has && !state.revealed && !mine && canWrite && !timeUp();
     const grid=$("grid"); grid.replaceChildren();
-    let canCount=0;
     myCard.forEach((num,i)=>{
       const b=document.createElement("button"); b.type="button"; b.className="sq"; b.id="sq"+i;
-      const on = !!marked[i];
-      const can = !on && eligible(num) && canWrite;
       b.textContent=num;
-      if(on) b.classList.add("on");
+      let label=String(num);
+      if(marked[i]){ b.classList.add("hit"); label+=", correct"; }
+      else if(misses[i]){ b.classList.add("miss"); label+=", wrong this round"; }
+      else if(!state.revealed && i===pickIdx){ b.classList.add("pick"); label+=", your pick"; }
       if(winSet.has(i)) b.classList.add("win");
-      if(i===curIdx) b.classList.add("cur");
-      if(can){ b.classList.add("can"); canCount++; }
-      b.disabled = !(can || i===curIdx);
-      b.setAttribute("aria-label", num+(on?" marked":""));
+      b.disabled = !(open && !marked[i]);
+      b.setAttribute("aria-label", label);
       b.onclick=()=>tapSquare(i);
       grid.append(b);
     });
-    $("cardCount").textContent = Object.keys(marked).length+" of 25 marked \u00b7 "+lines.length+" of "+LINES_TO_WIN+" lines";
-    $("cardMsg").textContent = line ? "Two lines! Tap BINGO." :
-      lines.length===1 && curIdx<0 && !(has && state.revealed) ? "One line done. One more for Bingo!" :
-      curIdx>=0 ? "Marked. Tap it again to undo, or tap another green square to move it." :
-      (has && state.revealed) ? (canCount ? "Got it right? Tap one green square to mark it." : "No open squares match this answer.") :
-      "When the answer is revealed, matching squares light up green.";
+    const greens = Object.keys(marked).length;
+    $("cardCount").textContent = greens+" correct \u00b7 "+lines.length+" of "+LINES_TO_WIN+" lines";
+    let msg;
+    if(line) msg="Two lines! Tap BINGO.";
+    else if(!has) msg = lines.length===1 ? "One line done. One more for Bingo!" : "When a question is drawn, tap the number you think is the answer.";
+    else if(mine && !state.revealed) msg="You're reading this one, so no pick for you this round.";
+    else if(!state.revealed) msg = timeUp() ? (pickIdx>=0 ? "Time's up. Locked in "+myCard[pickIdx]+"." : "Time's up. No pick this round.")
+                                : pickIdx>=0 ? "Locked in "+myCard[pickIdx]+". Tap another number to change it, or tap it again to clear." : "Tap the number you think is the answer.";
+    else if(pickIdx>=0 && marked[pickIdx]) msg="Correct! "+myCard[pickIdx]+" is yours.";
+    else if(pickIdx>=0) msg="Not this time. Your reds clear when it's your turn to read.";
+    else msg = mine ? "You read this one." : "No pick this round.";
+    if(lines.length===1 && !line && has && state.revealed) msg+=" One line done!";
+    $("cardMsg").textContent = msg;
   }
   $("bingoBtn").hidden = !(me && canWrite) || !!bg || (digital && !line);
   $("bingoBanner").hidden = !bg;
@@ -458,7 +466,14 @@ function render(){
     const nm=document.createElement("div"); nm.className="pname"; nm.textContent=pl.name;
     if(pl.id===myId){ const y=document.createElement("span"); y.className="you"; y.textContent="  · you"; nm.append(y); }
     li.append(n,nm);
-    if(markOpen && (state.marks||{})[pl.id]){ const ch=document.createElement("span"); ch.className="chip yes"; ch.textContent="Pressed"; li.append(ch); }
+    const mv=(state.marks||{})[pl.id];
+    if(digital && has && typeof mv==="string" && mv.startsWith("sq")){
+      const idx=Number(mv.slice(2)), ch=document.createElement("span");
+      if(!state.revealed){ ch.className="chip pick"; ch.textContent="Picked"; }
+      else if(pl.marked && pl.marked[idx]){ ch.className="chip yes"; ch.textContent="Correct"; }
+      else { ch.className="chip no"; ch.textContent="Missed"; }
+      li.append(ch);
+    } else if(!digital && markOpen && mv){ const ch=document.createElement("span"); ch.className="chip yes"; ch.textContent="Pressed"; li.append(ch); }
     if(canWrite){ const b=document.createElement("button"); b.className="ghost"; b.type="button"; b.textContent= pl.id===myId? "Leave":"Remove";
       b.onclick=()=>removePlayer(pl); li.append(b); }
     ol.append(li);
@@ -478,10 +493,24 @@ function drawIndex(){
   const pick = pool[Math.floor(Math.random()*pool.length)];
   return {pick, used:[...used, pick]};
 }
-$("drawBtn").onclick=()=>{ const d=drawIndex(); saveState({card:d.pick, used:d.used, revealed:false, drawnAt:serverNow(), marks:null}); };
+$("drawBtn").onclick=()=>{ clearMissesFor(reader()); const d=drawIndex(); saveState({card:d.pick, used:d.used, revealed:false, drawnAt:serverNow(), marks:null}); };
 $("skipBtn").onclick=()=>{ const d=drawIndex(); saveState({card:d.pick, used:d.used, revealed:false, drawnAt:serverNow(), marks:null}); };
-$("revealBtn").onclick=()=>{ saveState({revealed:true}); };
-$("passBtn").onclick=()=>{ saveState({turn:(state.turn||0)+1, card:null, revealed:false, drawnAt:0, marks:null}); };
+$("revealBtn").onclick=async()=>{
+  if(state.digital && BANK[state.card]){
+    const [n,,m]=BANK[state.card], patch={};
+    Object.entries(state.marks||{}).forEach(([pid,v])=>{
+      if(typeof v!=="string" || !v.startsWith("sq")) return;
+      const pl=players.find(x=>x.id===pid); if(!pl || !pl.card) return;
+      const i=Number(v.slice(2)), num=pl.card[i];
+      const ok = m==="more" ? num>=n : num<=n;
+      if(ok){ patch[pid+"/marked/"+i]=true; patch[pid+"/misses/"+i]=null; }
+      else patch[pid+"/misses/"+i]=true;
+    });
+    if(Object.keys(patch).length){ try{ await update(playersRef, patch); }catch(e){} }
+  }
+  saveState({revealed:true});
+};
+$("passBtn").onclick=()=>{ clearMissesFor(nextReader() || reader()); saveState({turn:(state.turn||0)+1, card:null, revealed:false, drawnAt:0, marks:null}); };
 async function mark(v){
   if(!myId || !stateRef) return;
   try{ await set(child(stateRef, "marks/"+myId), v); }catch(e){ $("markSum").textContent="Couldn't save. Try again."; }
@@ -548,21 +577,22 @@ function eligible(num){
   const c=state.card; if(c===null||c===undefined||!BANK[c]||!state.revealed) return false;
   const [n,,m]=BANK[c]; return m==="more" ? num>=n : num<=n;
 }
+function timeUp(){ const secs=Number(state.timerSecs)||0; return secs>0 && !!state.drawnAt && serverNow() > state.drawnAt + secs*1000; }
 async function tapSquare(i){
   if(!myId) return;
+  const c=state.card; if(c===null||c===undefined||!BANK[c]||state.revealed||amReader()||timeUp()) return;
   const cur=(state.marks||{})[myId];
-  const curIdx = typeof cur==="string" && cur.startsWith("sq") ? Number(cur.slice(2)) : -1;
-  const patch={};
-  try{
-    if(i===curIdx){ patch[myId+"/marked/"+i]=null; await update(playersRef, patch); await set(child(stateRef,"marks/"+myId), null); return; }
-    if(curIdx>=0) patch[myId+"/marked/"+curIdx]=null;
-    patch[myId+"/marked/"+i]=true;
-    await update(playersRef, patch); await set(child(stateRef,"marks/"+myId), "sq"+i);
-  }catch(e){ $("cardMsg").textContent="Couldn't save that square. Try again."; }
+  try{ await set(child(stateRef,"marks/"+myId), cur==="sq"+i ? null : "sq"+i); }
+  catch(e){ $("cardMsg").textContent="Couldn't save your pick. Try again."; }
+}
+/* a player's red squares stay until it's their turn to read again */
+async function clearMissesFor(pl){
+  if(!pl || !pl.misses || !Object.keys(pl.misses).length) return;
+  try{ await update(playersRef, {[pl.id+"/misses"]: null, [pl.id+"/miss"]: null}); }catch(e){}
 }
 async function dealCards(all){
   const patch={}, taken=new Set(all ? [] : players.filter(p=>p.card).map(p=>cardKey(p.card)));
-  players.forEach(pl=>{ if(all || !pl.card){ const c=newCard(taken); taken.add(cardKey(c)); patch[pl.id+"/card"]=c; patch[pl.id+"/marked"]=null; } });
+  players.forEach(pl=>{ if(all || !pl.card){ const c=newCard(taken); taken.add(cardKey(c)); patch[pl.id+"/card"]=c; patch[pl.id+"/marked"]=null; patch[pl.id+"/miss"]=null; patch[pl.id+"/misses"]=null; } });
   if(Object.keys(patch).length) await update(playersRef, patch);
 }
 $("cardSeg").addEventListener("click", async e=>{
@@ -624,7 +654,7 @@ if(!configured){
     players = Object.entries(v).map(([id,d])=>{
       let card = d.card ? (Array.isArray(d.card) ? d.card : Object.values(d.card)).map(Number) : null;
       if(card && (card.length!==25 || card.includes(0))) card=null;
-      return {id, name:String(d.name||""), at:Number(d.at)||0, card, marked:d.marked||{}};
+      return {id, name:String(d.name||""), at:Number(d.at)||0, card, marked:d.marked||{}, misses:d.misses||{}};
     });
     const meNow = players.find(x=>x.id===myId);
     if(state.digital && meNow && !meNow.card) update(playersRef, {[myId+"/card"]: newCard(), [myId+"/marked"]: null}).catch(()=>{});
