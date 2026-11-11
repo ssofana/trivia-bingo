@@ -163,6 +163,11 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .bnum{font-weight:900}
 .bnum.more{color:#4fd18a}
 .bnum.less{color:#ff6a5c}
+/* lock-in / next-question countdown line */
+.nextline{display:flex;align-items:center;justify-content:center;gap:8px;min-height:26px;font-size:14px;font-weight:700;color:var(--fg)}
+.nextline .n{font-family:var(--display);font-weight:400;font-size:20px;min-width:1.2em;text-align:center;color:var(--accent)}
+.nextline.lock .n{color:var(--ball)}
+.tbar.view i{background:var(--accent)}
 /* smooth stage changes */
 @media (prefers-reduced-motion:no-preference){
   .qcard.enter{animation:cardIn .4s cubic-bezier(.2,.8,.2,1)}
@@ -190,6 +195,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .hostpanel h2{margin-bottom:2px}
 .setrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .setrow .lbl{min-width:64px;font-weight:700}
+.sethint{margin:-4px 0 0;font-size:12px;color:var(--muted)}
 .qmeta{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;font-size:13px;color:var(--muted);text-align:center}
 
 /* reader line */
@@ -321,6 +327,10 @@ li.cur .num{background:var(--ball);border-color:var(--ball);color:var(--ball-ink
       <div class="setrow seg" id="cardSeg"><span class="lbl">Cards</span>
         <button type="button" data-d="0">Paper</button><button type="button" data-d="1">Digital</button>
       </div>
+      <div class="setrow seg" id="revealSeg"><span class="lbl">Reveal</span>
+        <button type="button" data-r="1">Button on</button><button type="button" data-r="0">Auto only</button>
+      </div>
+      <p class="sethint" id="revealHint"></p>
       <div class="setrow seg" id="shapeSeg"><span class="lbl">Question</span>
         <button type="button" data-c="rect">Rectangle</button><button type="button" data-c="circle">Circle</button>
       </div>
@@ -350,12 +360,12 @@ li.cur .num{background:var(--ball);border-color:var(--ball);color:var(--ball-ink
   </section>
 
   <div class="strip" id="strip" aria-live="polite"></div>
+  <div class="nextline" id="nextLine" hidden></div>
 
   <div class="actions" id="readerCtl" hidden>
     <button class="big" id="drawBtn" type="button">Draw a question</button>
     <button class="pri" id="revealBtn" type="button">Reveal answer</button>
     <button class="ghost" id="skipBtn" type="button">Skip</button>
-    <button class="pri" id="passBtn" type="button">Next question</button>
   </div>
 
   <button class="mark-yes" id="markYes" type="button" hidden>Number pressed</button>
@@ -412,7 +422,7 @@ const FIREBASE_CONFIG = {
   appId: "1:391936139266:web:8c9102c7f931b9d546471b"
 };
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getDatabase, ref, child, set, update, get, remove, onValue, off } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+import { getDatabase, ref, child, set, update, get, remove, onValue, off, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 /* Question bank: [answer, question, modifier, category] — "more" = that number or higher, "less" = that number or lower */
@@ -423,147 +433,199 @@ const BANK = [
  [1, "Points for a made free throw in basketball", "more", "Basketball"],
  [1, "The number of kings each player starts with in chess", "more", "Games"],
  [1, "The number of eyes a Cyclops has in Greek myth", "more", "Fun facts"],
+ [1, "Times a day BeReal sends its “time to post” alert", "more", "TikTok & trends"],
+ [1, "Bulbasaur's Pokédex number", "more", "Video games"],
  [2, "The number of landlocked countries in South America", "less", "Geography"],
  [2, "The number of Best Actor Oscars won by Tom Hanks", "more", "Movies"],
  [2, "The only even prime number", "less", "Math"],
  [2, "Points for a basket made inside the three-point line", "less", "Basketball"],
  [2, "Tributes chosen from each district in The Hunger Games", "more", "Movies"],
  [2, "The number of humps on a Bactrian camel", "less", "Fun facts"],
+ [2, "Tails' tails in Sonic the Hedgehog", "less", "Video games"],
  [3, "The number of singers in Destiny's Child's best-known lineup", "more", "Pop culture"],
  [3, "The number of oceans that touch Canada's coastline", "less", "Geography"],
  [3, "The number of ships Columbus sailed with in 1492", "more", "History"],
  [3, "Points for a shot made from behind the arc", "more", "Basketball"],
  [3, "Outs in each half-inning of baseball", "less", "Baseball"],
  [3, "How many in a row you need to win tic-tac-toe", "more", "Games"],
+ [3, "Co-founders who created Vine", "less", "Vine"],
+ [3, "Sanderson sisters in Hocus Pocus", "less", "Movies"],
+ [3, "Rules for looking after a mogwai in Gremlins", "more", "Movies"],
+ [3, "Pieces of the Triforce in The Legend of Zelda", "more", "Video games"],
+ [3, "The Powerpuff Girls", "more", "Cartoons"],
+ [3, "Girls Gru adopts in Despicable Me", "less", "Cartoons"],
  [4, "The square root of 16", "less", "Math"],
  [4, "The number of houses at Hogwarts", "more", "Movies"],
  [4, "The number of countries that make up the United Kingdom", "less", "Geography"],
  [4, "Bases on a baseball diamond, counting home plate", "less", "Baseball"],
  [4, "Quarters in an NBA game", "more", "Basketball"],
  [4, "The number of Teenage Mutant Ninja Turtles", "less", "Pop culture"],
+ [4, "Years Vine ran, from launch to shutdown", "more", "Vine"],
+ [4, "Ghostbusters in the original 1984 team", "less", "Movies"],
+ [4, "Ghosts chasing Pac-Man", "less", "Video games"],
+ [4, "Players in a Fortnite squad", "more", "Video games"],
+ [4, "Fingers on each hand of a Simpsons character", "less", "Cartoons"],
+ [4, "People in Bluey's family", "more", "Cartoons"],
  [5, "The number of permanent members of the UN Security Council", "more", "History"],
  [5, "The number of Platonic solids", "less", "Math"],
  [5, "The number of members in One Direction when the band formed", "more", "Pop culture"],
  [5, "Dice used in a game of Yahtzee", "more", "Games"],
  [5, "The number of Spice Girls", "less", "Pop culture"],
  [5, "Arms on a typical starfish", "more", "Fun facts"],
+ [5, "Letters in a Wordle answer", "less", "TikTok & trends"],
+ [5, "Native fruit types in Animal Crossing: New Horizons", "more", "Video games"],
+ [5, "Members of the Simpson family", "more", "Cartoons"],
  [6, "The number of Infinity Stones in the Marvel movies", "less", "Movies"],
  [6, "The number of wives Henry VIII had", "more", "History"],
  [6, "The smallest perfect number", "less", "Math"],
  [6, "The personal foul that disqualifies an NBA player", "less", "Basketball"],
  [6, "Players per side on the ice in hockey, including the goalie", "more", "Sports"],
  [6, "Main friends in the TV show Friends", "less", "Pop culture"],
+ [6, "Seconds in a looping Vine video", "more", "Vine"],
+ [6, "Guesses you get in Wordle", "more", "TikTok & trends"],
+ [6, "Avengers in the original 2012 team-up", "less", "Movies"],
+ [6, "Pups in the original PAW Patrol team", "less", "Cartoons"],
  [7, "The number of countries in Central America", "more", "Geography"],
  [7, "The number of members in BTS", "less", "Pop culture"],
  [7, "The number of books in the main Harry Potter series", "more", "Movies"],
  [7, "Tiles each player starts with in Scrabble", "more", "Games"],
  [7, "The most games a World Series can last", "less", "Baseball"],
  [7, "Dwarfs in Disney's Snow White", "more", "Movies"],
+ [7, "Weasley children in Harry Potter", "more", "Movies"],
+ [7, "Different pieces in Tetris", "more", "Video games"],
+ [7, "Chaos Emeralds in Sonic", "less", "Video games"],
+ [7, "Squirtle's Pokédex number", "more", "Video games"],
  [8, "The number of years Barack Obama served as president", "less", "History"],
  [8, "The cube root of 512", "more", "Math"],
  [8, "The number of films in the main Harry Potter film series", "less", "Movies"],
  [8, "Arms on an octopus", "less", "Fun facts"],
  [8, "Rowers in an Olympic “eight” boat, not counting the cox", "more", "Sports"],
  [8, "Kobe Bryant's first jersey number with the Lakers", "less", "Basketball"],
+ [8, "Eevee's evolutions", "less", "Video games"],
+ [8, "Gym badges needed to challenge the Pokémon League", "more", "Video games"],
  [9, "The number of films in the Star Wars Skywalker saga", "more", "Movies"],
  [9, "The number of provinces in South Africa", "less", "Geography"],
  [9, "The number of zeros in one billion", "more", "Math"],
  [9, "Players in a baseball batting order", "more", "Baseball"],
  [9, "Different digits used in Sudoku", "less", "Games"],
  [9, "Symphonies Beethoven completed", "more", "Fun facts"],
+ [9, "Members of the Fellowship of the Ring", "more", "Movies"],
+ [9, "The whole number of the Hogwarts Express platform", "less", "Movies"],
  [10, "The number of amendments in the US Bill of Rights", "less", "History"],
  [10, "The number of seasons of Friends", "more", "Pop culture"],
  [10, "The number of edges on a pentagonal pyramid", "more", "Math"],
  [10, "Legs on a crab, counting its claws", "less", "Fun facts"],
  [10, "Frames in a game of ten-pin bowling", "more", "Sports"],
  [10, "The UK prime minister's house number on Downing Street", "less", "Pop culture"],
+ [10, "Hearts of health a Minecraft player has", "more", "Video games"],
  [11, "The month (as a number) when the WWI armistice was signed", "less", "History"],
  [11, "The number of Oscars won by Titanic", "more", "Movies"],
  [11, "The smallest two-digit prime number", "less", "Math"],
  [11, "Thieves in the 2001 heist movie “Ocean's __”", "more", "Movies"],
  [11, "The Stranger Things hero who is named after a number", "less", "Pop culture"],
  [11, "Players per side on a field hockey pitch", "more", "Sports"],
+ [11, "The year planking photos went viral (20__)", "more", "TikTok & trends"],
  [12, "The number of people who have walked on the Moon", "more", "History"],
  [12, "The number of edges on a cube", "less", "Math"],
  [12, "The number of countries in South America", "more", "Geography"],
  [12, "Pairs of ribs in the human body", "less", "Fun facts"],
  [12, "Angry Men in the classic courtroom film", "more", "Movies"],
  [12, "Animals in the Chinese zodiac", "more", "Fun facts"],
+ [12, "The treadmill incline % in TikTok's 12-3-30 workout", "more", "TikTok & trends"],
+ [12, "Katniss Everdeen's home district", "less", "Movies"],
+ [12, "Kids in the family in Cheaper by the Dozen", "less", "Movies"],
  [13, "The number of provinces and territories in Canada", "less", "Geography"],
  [13, "The Fibonacci number that comes right after 8", "more", "Math"],
  [13, "Taylor Swift's famous lucky number", "less", "Pop culture"],
  [13, "Cards dealt to each player in bridge", "less", "Games"],
  [13, "Players per side in rugby league", "more", "Sports"],
  [13, "The 2007 sequel “Ocean's __”", "less", "Movies"],
+ [13, "The year Vine launched (20__)", "less", "Vine"],
+ [13, "The year everyone filmed the Harlem Shake (20__)", "more", "TikTok & trends"],
  [14, "The regnal number of France's “Sun King” Louis", "more", "History"],
  [14, "The number of mountains on Earth taller than 8,000 metres", "less", "Geography"],
  [14, "The lowest common multiple of 2 and 7", "more", "Math"],
  [14, "February's date for Valentine's Day", "more", "Pop culture"],
  [14, "Tiles in a winning Mahjong hand", "less", "Games"],
  [14, "Teams in the NBA draft lottery", "more", "Basketball"],
+ [14, "The year of the Ice Bucket Challenge (20__)", "less", "TikTok & trends"],
  [15, "The number of republics in the former Soviet Union", "more", "History"],
  [15, "The fifth triangular number", "less", "Math"],
  [15, "The minutes of fame Andy Warhol said everyone would get", "more", "Pop culture"],
  [15, "The first point won in a tennis game", "less", "Sports"],
  [15, "Sliding tiles in the classic “fifteen puzzle”", "more", "Games"],
  [15, "Standard contracts allowed on an NBA roster", "less", "Basketball"],
+ [15, "Seconds in an original TikTok (and Musical.ly) video", "less", "TikTok & trends"],
+ [15, "Players allowed in an Among Us lobby", "more", "Video games"],
  [16, "Abraham Lincoln's number in the order of US presidents", "less", "History"],
  [16, "2 to the power of 4", "more", "Math"],
  [16, "The number of states in Germany", "less", "Geography"],
  [16, "Teams in the NBA playoff bracket, not counting the play-in", "more", "Basketball"],
  [16, "Teams in each NFL conference", "less", "Sports"],
  [16, "The birthday Molly Ringwald forgets about in “__ Candles”", "less", "Movies"],
+ [16, "The year Twitter announced it was shutting Vine down (20__)", "less", "Vine"],
+ [16, "The year of the Mannequin Challenge (20__)", "more", "TikTok & trends"],
  [17, "The 7th prime number", "more", "Math"],
  [17, "The number of autonomous communities in Spain", "less", "Geography"],
  [17, "The century in which the Mayflower sailed to America", "more", "History"],
  [17, "Zac Efron's body-swap comedy “__ Again”", "more", "Movies"],
  [17, "Regular-season games each NFL team plays", "less", "Sports"],
  [17, "Sustainable Development Goals adopted by the UN", "less", "Fun facts"],
+ [17, "The year Vine stopped taking new uploads (20__)", "more", "Vine"],
  [18, "The number of the US amendment that started Prohibition", "less", "History"],
  [18, "The number of edges on a hexagonal prism", "more", "Math"],
  [18, "The number of regions in France, including overseas", "less", "Geography"],
  [18, "Peyton Manning's jersey number", "more", "Sports"],
  [18, "Pokémon types in the main games", "more", "Games"],
  [18, "The age of majority in Ontario", "less", "Fun facts"],
+ [18, "The year Musical.ly was merged into TikTok (20__)", "less", "TikTok & trends"],
  [19, "The century in which Canadian Confederation happened", "more", "History"],
  [19, "The 8th prime number", "less", "Math"],
  [19, "The title of Adele's debut album", "more", "Pop culture"],
  [19, "The minimum age to be drafted into the NBA", "less", "Basketball"],
  [19, "The “impossible” cribbage hand players joke about", "more", "Games"],
+ [19, "The year the Renegade dance was created (20__)", "less", "TikTok & trends"],
  [20, "The number of faces on an icosahedron", "less", "Math"],
  [20, "The number of regions in Italy", "more", "Geography"],
  [20, "Thousands of leagues in the title of Jules Verne's undersea novel", "less", "Books"],
  [20, "The number at the top of a standard dartboard", "more", "Games"],
  [20, "Questions allowed in the classic guessing game", "less", "Pop culture"],
  [20, "Standard amino acids the human body uses to build proteins", "more", "Fun facts"],
+ [20, "The year the Ocean Spray skateboard video went viral (20__)", "more", "TikTok & trends"],
  [21, "The title of Adele's second album", "more", "Pop culture"],
  [21, "The 8th number in the Fibonacci sequence (1, 1, 2, 3…)", "less", "Math"],
  [21, "The century we are living in now", "more", "History"],
  [21, "Tim Duncan's jersey number with the Spurs", "less", "Basketball"],
  [21, "The street in the Channing Tatum comedy “__ Jump Street”", "more", "Movies"],
  [21, "The legal drinking age in the United States", "less", "Fun facts"],
+ [21, "The answer to “What's 9 plus 10?” in the famous Vine", "more", "Vine"],
  [22, "The number of the US amendment limiting presidents to two terms", "less", "History"],
  [22, "The Taylor Swift song about “feeling” this age", "more", "Pop culture"],
  [22, "The top number of the fraction often used for pi, __/7", "more", "Math"],
  [22, "The sequel “__ Jump Street”", "more", "Movies"],
  [22, "Coloured street properties on a Monopoly board", "less", "Games"],
+ [22, "The year Corn Kid's “it's corn!” interview blew up (20__)", "less", "TikTok & trends"],
  [23, "The smallest prime number greater than 20", "less", "Math"],
  [23, "The number in the title of Jim Carrey's 2007 thriller “The Number __”", "more", "Movies"],
  [23, "The number of provinces in Argentina", "less", "Geography"],
  [23, "LeBron James' jersey number with the Cleveland Cavaliers", "more", "Basketball"],
  [23, "People needed in a room for a 50/50 chance two share a birthday", "less", "Fun facts"],
  [23, "David Beckham's jersey number at Real Madrid", "more", "Sports"],
+ [23, "The year TikTok asked how often men think about the Roman Empire (20__)", "less", "TikTok & trends"],
+ [23, "The “Barbenheimer” summer at the movies (20__)", "more", "Movies"],
  [24, "The standard frames per second of cinema film", "more", "Movies"],
  [24, "4 factorial (4!)", "less", "Math"],
  [24, "The title of the Kiefer Sutherland show where each season covers one day", "more", "Pop culture"],
  [24, "Kobe Bryant's second jersey number with the Lakers", "less", "Basketball"],
  [24, "Seconds on the NBA shot clock", "more", "Basketball"],
  [24, "Triangular points on a backgammon board", "less", "Games"],
+ [24, "The year of “brat summer” (20__)", "more", "TikTok & trends"],
  [25, "Queen Elizabeth II's age when she became queen", "less", "History"],
  [25, "The sum of the first five odd numbers", "more", "Math"],
  [25, "The title of Adele's third album", "less", "Pop culture"],
  [25, "Barry Bonds' jersey number with the San Francisco Giants", "more", "Baseball"],
  [25, "Letter cubes in a Big Boggle grid", "less", "Games"],
+ [25, "Pikachu's Pokédex number", "less", "Video games"],
  [26, "The number of cantons in Switzerland", "more", "Geography"],
  [26, "The only number sitting between a perfect square and a perfect cube", "less", "Math"],
  [26, "The number of full miles in a marathon", "more", "Sports"],
@@ -588,6 +650,7 @@ const BANK = [
  [30, "Stephen Curry's jersey number", "more", "Basketball"],
  [30, "Teams in Major League Baseball", "less", "Baseball"],
  [30, "Teams in the NBA", "more", "Basketball"],
+ [30, "Minutes of walking in TikTok's 12-3-30 workout", "less", "TikTok & trends"],
  [31, "The 11th prime number", "less", "Math"],
  [31, "The number of states in Mexico, not counting Mexico City", "less", "Geography"],
  [31, "The number of flavours Baskin-Robbins is famous for", "less", "Pop culture"],
@@ -598,8 +661,11 @@ const $=id=>document.getElementById(id);
 const store={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
 
 /* ---------- game state (mirrors the database) ---------- */
-const STATE0={turn:0,card:null,revealed:false,revealedAt:0,used:[],bingo:null,drawnAt:0};
-const SETTINGS0={timerSecs:0,digital:false,round:0,phase:"lobby",shape:"rect"};
+const STATE0={turn:0,card:null,revealed:false,revealedAt:0,used:[],bingo:null,drawnAt:0,lockAt:0};
+const LOCK_MS=5000;          // once everyone has answered: 5s to change your mind
+const VIEW_MS=6000;          // after the reveal: time to see the answer and results
+const VIEW_PAPER_MS=8000;    // paper boards need a moment to mark and tap "Number pressed"
+const SETTINGS0={timerSecs:0,digital:false,round:0,phase:"lobby",shape:"rect",revealBtn:true};
 let uid=null, room=null, hostId=null, ready=false, serverOffset=0;
 let players=[], state={...STATE0}, settings={...SETTINGS0}, picks={};
 const serverNow=()=>Date.now()+serverOffset;
@@ -651,6 +717,11 @@ function render(){
   $("hostNote").textContent = !live && isHost() ? "You're the host: only you can change settings, start the game or remove players." : "";
   document.querySelectorAll("#timerSeg button").forEach(b=>b.classList.toggle("on", Number(b.dataset.s)===(Number(settings.timerSecs)||0)));
   document.querySelectorAll("#cardSeg button").forEach(b=>b.classList.toggle("on", (b.dataset.d==="1")===digital));
+  const revealOn = settings.revealBtn!==false;
+  document.querySelectorAll("#revealSeg button").forEach(b=>b.classList.toggle("on", (b.dataset.r==="1")===revealOn));
+  $("revealSeg").hidden = !digital; $("revealHint").hidden = !digital;
+  $("revealHint").textContent = revealOn ? "The reader can reveal early with a Reveal now button."
+    : "No Reveal button: answers reveal after everyone locks in"+((Number(settings.timerSecs)||0)>0 ? " or when the timer runs out." : ".");
   const shape = settings.shape==="circle" ? "circle" : "rect";
   document.querySelectorAll("#shapeSeg button").forEach(b=>b.classList.toggle("on", b.dataset.c===shape));
   $("qcard").classList.toggle("round", shape==="circle");
@@ -715,7 +786,6 @@ function render(){
       const cnt=document.createElement("span"); cnt.className="cnt"; cnt.textContent=inN+"/"+others.length+" in"; strip.append(cnt);
       others.forEach(pl=>{ const done=pickIdx(pl.id)>=0; const e=document.createElement("span"); e.className="pill"+(done?"":" none");
         const d=document.createElement("span"); d.className="dot"+(done?" on":""); e.append(d, document.createTextNode(pl.id===uid?"You":pl.name)); strip.append(e); });
-      if(mine && inN===others.length) note("Everyone's in. Revealing…");
     } else note(mine ? "Read it out, then reveal when everyone's answered." : "Answer out loud!");
   } else {
     if(!others.length) note("No other players yet.");
@@ -734,17 +804,16 @@ function render(){
     });
   }
 
-  // ----- reader actions: one clear button per stage -----
-  const waitingBonus = digital && p.some(bonusOpenFor);
-  $("readerCtl").hidden = !mine;
+  // ----- reader actions: only while a question is open -----
+  $("readerCtl").hidden = !mine || (has && rev);
   const stage = !has ? "draw" : !rev ? "ask" : "next";
   if(stage!==lastStage){ lastStage=stage; replay($("readerCtl"),"swap"); }
   $("drawBtn").hidden = stage!=="draw";
-  $("revealBtn").hidden = stage!=="ask";
+  const noReveal = digital && settings.revealBtn===false;      // host turned the Reveal button off
+  $("revealBtn").hidden = stage!=="ask" || noReveal;
   $("skipBtn").hidden = stage!=="ask";
-  $("passBtn").hidden = stage!=="next";
-  $("passBtn").disabled = waitingBonus;
-  $("passBtn").textContent = waitingBonus ? "Bonus picks\u2026 "+Math.ceil(bonusLeft()/1000)+"s" : nx ? "Next question \u2192 "+(nx.id===uid?"you":nx.name) : "Next question";
+  $("skipBtn").style.flex = noReveal ? "1" : "";
+  $("revealBtn").textContent = digital ? "Reveal now" : "Reveal answer";
 
   // ----- paper cards: "Number pressed" -----
   $("markYes").hidden = !rev || !inGame || digital || mine;
@@ -764,7 +833,7 @@ function render(){
   $("cardBox").hidden = !myCard;
   if(myCard){
     const pi = pickIdx(uid), marked=m0.marked||{}, misses=m0.misses||{};
-    const pickOpen = has && !rev && !mine && !timeUp();
+    const pickOpen = has && !rev && !mine && !picksClosed();
     const grid=$("grid"); grid.replaceChildren();
     myCard.forEach((num,i)=>{
       const b=document.createElement("button"); b.type="button"; b.className="sq"; b.id="sq"+i; b.textContent=num;
@@ -786,8 +855,9 @@ function render(){
     else if(myBonus) msg="";
     else if(!has) msg = lines.length===1 ? "One line done. One more for Bingo!" : "";
     else if(mine && !rev) msg="You're reading, so no pick this round.";
-    else if(!rev) msg = timeUp() ? (pi>=0 ? "Time's up. Locked in "+myCard[pi]+"." : "Time's up.")
-                      : pi>=0 ? "Locked in "+myCard[pi]+". Tap to change." : "Tap your answer. Exact answers earn a bonus.";
+    else if(!rev) msg = picksClosed() ? (pi>=0 ? "Locked in "+myCard[pi]+"." : "Time's up.")
+                      : state.lockAt ? (pi>=0 ? "Picked "+myCard[pi]+". Change it before the countdown ends." : "Quick, tap your answer!")
+                      : pi>=0 ? "Picked "+myCard[pi]+". Tap to change." : "Tap your answer. Exact answers earn a bonus.";
     else if(pi>=0 && exactFor(m0)) msg = m0.bonus===state.drawnAt ? "Exact! Bonus claimed." : "Exact!";
     else if(pi>=0 && fits(myCard[pi])) msg="Correct! "+myCard[pi]+" is yours.";
     else if(pi>=0) msg="Not this time.";
@@ -855,34 +925,64 @@ function drawIndex(){
   const pick = pool[Math.floor(Math.random()*pool.length)];
   return {pick, used:[...used, pick]};
 }
-const draw=()=>{ const d=drawIndex(); return {card:d.pick, used:d.used, revealed:false, revealedAt:0, drawnAt:serverNow()}; };
+function drawFrom(used){
+  used = Array.isArray(used) ? used.filter(x=>x!==null&&x!==undefined) : Object.values(used||{});
+  let pool = BANK.map((_,i)=>i).filter(i=>!used.includes(i));
+  if(!pool.length){ used=[]; pool=BANK.map((_,i)=>i); }
+  const pick = pool[Math.floor(Math.random()*pool.length)];
+  return {card:pick, used:[...used, pick], revealed:false, revealedAt:0, drawnAt:serverNow(), lockAt:0};
+}
+const draw=()=>drawFrom(state.used);
 $("drawBtn").onclick=()=>saveState(draw());
 $("skipBtn").onclick=()=>saveState(draw());
-const reveal=()=>{ if(hasCard() && !state.revealed) saveState({revealed:true, revealedAt:serverNow()}); };
-$("revealBtn").onclick=reveal;
-/* one tap hands the turn on AND puts the next question in front of the next reader */
-$("passBtn").onclick=()=>{ if(digital_waiting()) return; saveState({turn:(state.turn||0)+1, ...draw()}); };
-/* reader's phone reveals by itself once every player has locked in, or when the timer runs out */
-let autoFor=0, autoTimer=null;
-function autoReveal(){
-  if(!amReader() || !hasCard() || state.revealed || autoFor===state.drawnAt) return;
-  const others=players.filter(pl=>pl.id!==uid);
-  const allIn = settings.digital && others.length>0 && others.every(pl=>pickIdx(pl.id)>=0);
-  if(!allIn && !timeUp()) return;
-  autoFor=state.drawnAt; const key=state.drawnAt;
-  clearTimeout(autoTimer);
-  autoTimer=setTimeout(()=>{
-    const still = settings.digital && others.every(pl=>pickIdx(pl.id)>=0);
-    if(state.drawnAt===key && !state.revealed && (still || timeUp())) reveal(); else autoFor=0;
-  }, allIn ? 1500 : 400);
+
+/* ---- the round runs itself ----
+   everyone answered  ->  5s lock-in countdown  ->  reveal  ->  answer on screen for a few seconds
+   ->  next reader's question appears.  Any phone in the game can move it along; a transaction
+   makes sure each step happens exactly once even if several phones try at the same moment. */
+function others(){ const r=reader(); return players.filter(pl=>!r || pl.id!==r.id); }
+function allIn(){ const o=others(); return !!settings.digital && o.length>0 && o.every(pl=>pickIdx(pl.id)>=0); }
+function picksClosed(){ return timeUp() || (!!state.lockAt && serverNow() >= state.lockAt); }
+function revealDue(){
+  if(state.lockAt) return state.lockAt;
+  const secs=Number(settings.timerSecs)||0;
+  return secs>0 && state.drawnAt ? state.drawnAt + secs*1000 : 0;
 }
-function digital_waiting(){ return !!settings.digital && players.some(bonusOpenFor); }
+function advanceDue(){
+  if(!state.revealed || !state.revealedAt) return 0;
+  let t = state.revealedAt + (settings.digital ? VIEW_MS : VIEW_PAPER_MS);
+  if(settings.digital && players.some(bonusOpenFor)) t = Math.max(t, state.revealedAt + BONUS_MS);
+  return t;
+}
+let busy=false;
+function step(fn){
+  if(busy) return; busy=true;
+  runTransaction(stateRef, cur=>{ if(!cur) return; return fn(cur); }).catch(()=>{}).finally(()=>{ busy=false; });
+}
+function startLock(){ const key=state.drawnAt; step(cur=> cur.drawnAt===key && !cur.revealed && !cur.lockAt ? {...cur, lockAt:serverNow()+LOCK_MS} : undefined); }
+function revealNow(){ const key=state.drawnAt; step(cur=> cur.drawnAt===key && !cur.revealed ? {...cur, revealed:true, revealedAt:serverNow()} : undefined); }
+function advance(){ const key=state.drawnAt; step(cur=> cur.drawnAt===key && cur.revealed && !cur.bingo ? {...cur, turn:(cur.turn||0)+1, ...drawFrom(cur.used)} : undefined); }
+$("revealBtn").onclick=()=>{ if(settings.digital && settings.revealBtn===false) return; revealNow(); };
+const reveal=revealNow;
+function driver(){
+  if(!playing() || !ready || !joined() || state.bingo || !hasCard()) return;
+  const now=serverNow(), grace = amReader() ? 0 : 2500;   // the reader's phone leads; others step in if it's asleep
+  if(!state.revealed){
+    if(!state.lockAt && allIn()) startLock();
+    const due=revealDue();
+    if(due && now >= due + grace) revealNow();
+  } else {
+    const due=advanceDue();
+    if(due && now >= due + grace) advance();
+  }
+}
 async function setPick(v){
   try{ await set(child(picksRef, uid), v===null ? null : {q:state.drawnAt, v}); }
   catch(e){ $("cardMsg").textContent="Couldn't save. Try again."; }
 }
 $("markYes").onclick=()=>setPick(pickOf(uid)==="yes" ? null : "yes");
 $("timerSeg").addEventListener("click", e=>{ const b=e.target.closest("button[data-s]"); if(b) saveSettings({timerSecs:Number(b.dataset.s)}); });
+$("revealSeg").addEventListener("click", e=>{ const b=e.target.closest("button[data-r]"); if(b) saveSettings({revealBtn:b.dataset.r==="1"}); });
 $("shapeSeg").addEventListener("click", e=>{ const b=e.target.closest("button[data-c]"); if(b) saveSettings({shape:b.dataset.c}); });
 $("cardSeg").addEventListener("click", e=>{ const b=e.target.closest("button[data-d]"); if(b) saveSettings({digital:b.dataset.d==="1"}); });
 
@@ -900,19 +1000,45 @@ function tick(){
   if(playing()){
     const m0=me(), open=!!m0 && bonusOpenFor(m0), anyOpen=!!settings.digital && players.some(bonusOpenFor);
     if(open) $("bonusSecs").textContent=Math.ceil(bonusLeft()/1000)+"s";
-    if(anyOpen && amReader()) $("passBtn").textContent="Bonus picks\u2026 "+Math.ceil(bonusLeft()/1000)+"s";
-    autoReveal();
+    driver();
     if(bonusWasOpen && !anyOpen){ bonusWasOpen=false; render(); return; }
     bonusWasOpen = anyOpen;
   }
-  const t=$("timer"), secs=Number(settings.timerSecs)||0;
-  const active = secs>0 && hasCard() && !state.revealed && state.drawnAt;
-  t.hidden=!active; $("tbar").hidden=!active; if(!active) return;
-  const ms=Math.max(0, state.drawnAt + secs*1000 - serverNow());
-  $("tfill").style.width=(100*ms/(secs*1000))+"%"; $("tbar").classList.toggle("low", ms<=5000);
+  const t=$("timer"), tb=$("tbar"), nl=$("nextLine"), secs=Number(settings.timerSecs)||0, now=serverNow();
+  const has=hasCard(), live=playing() && !state.bingo;
+  // 1) lock-in countdown (everyone answered)
+  if(live && has && !state.revealed && state.lockAt){
+    const ms=Math.max(0, state.lockAt-now);
+    tb.hidden=false; tb.classList.add("low"); tb.classList.remove("view"); $("tfill").style.width=(100*ms/LOCK_MS)+"%";
+    t.hidden=false; t.className="timer low"; t.textContent=Math.ceil(ms/1000)+"s";
+    nl.hidden=false; nl.className="nextline lock";
+    setLine(nl, ms>0 ? "Everyone's in. Locking in" : "Locked in!", ms>0 ? Math.ceil(ms/1000) : "");
+    return;
+  }
+  // 2) answer on screen, then the next question
+  if(live && has && state.revealed && state.revealedAt){
+    const due=advanceDue(), total=Math.max(1, due-state.revealedAt), ms=Math.max(0, due-now);
+    t.hidden=true; tb.hidden=false; tb.classList.remove("low"); tb.classList.add("view"); $("tfill").style.width=(100*ms/total)+"%";
+    const nx=nextReader(), who = nx ? (nx.id===uid ? "You read next" : nx.name+" reads next") : "Next question";
+    const bonusWait = settings.digital && players.some(bonusOpenFor);
+    nl.hidden=false; nl.className="nextline";
+    setLine(nl, bonusWait ? "Waiting for bonus picks\u2026" : who+" in", ms>0 ? Math.ceil(ms/1000) : "");
+    return;
+  }
+  nl.hidden=true; tb.classList.remove("view");
+  // 3) the optional question timer
+  const active = secs>0 && has && !state.revealed && state.drawnAt;
+  t.hidden=!active; tb.hidden=!active; if(!active) return;
+  const ms=Math.max(0, state.drawnAt + secs*1000 - now);
+  $("tfill").style.width=(100*ms/(secs*1000))+"%"; tb.classList.toggle("low", ms<=5000);
   const left=Math.ceil(ms/1000);
-  if(left===0){ t.className="timer up"; t.textContent="Time's up!"; if(beepedFor!==state.drawnAt){ beepedFor=state.drawnAt; if(serverNow()-state.drawnAt < secs*1000+3000) beep(); } }
+  if(left===0){ t.className="timer up"; t.textContent="Time's up!"; if(beepedFor!==state.drawnAt){ beepedFor=state.drawnAt; if(now-state.drawnAt < secs*1000+3000) beep(); } }
   else { t.className="timer"+(left<=5?" low":""); t.textContent=left+"s"; }
+}
+function setLine(el, text, n){
+  if(el.dataset.t===text+"|"+n) return; el.dataset.t=text+"|"+n;
+  el.replaceChildren(); const a=document.createElement("span"); a.textContent=text; el.append(a);
+  if(n!==""){ const b=document.createElement("span"); b.className="n"; b.textContent=n; el.append(b); }
 }
 setInterval(tick, 250);
 
@@ -960,7 +1086,7 @@ async function useBonus(i){
   catch(e){ $("cardMsg").textContent="Couldn't claim that number. Try again."; }
 }
 async function tapSquare(i){
-  if(!hasCard()||state.revealed||amReader()||timeUp()) return;
+  if(!hasCard()||state.revealed||amReader()||picksClosed()) return;
   setPick(pickOf(uid)==="sq"+i ? null : "sq"+i);
 }
 /* host: fresh deck, turns and cards; phase decides lobby vs playing */
