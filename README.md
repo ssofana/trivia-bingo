@@ -82,6 +82,21 @@ What the TV shows:
 
 **Exit TV mode** (top right) returns that screen to the normal page.
 
+## Trivia Bingo TV app (Google TV / Android TV)
+
+`trivia-bingo-tv.apk` is a small Android TV app that opens the site straight into TV mode, full screen, and keeps the TV awake during the game. It appears on the Google TV home screen with its own banner. It loads the live site, so website updates show up in the app automatically.
+
+**Install (once):**
+1. On the TV: **Settings → System → About**, scroll to **Android TV OS build** and press OK on it 7 times until it says you're a developer.
+2. Install **Downloader** (by AFTVnews) from the Google Play Store on the TV.
+3. Upload `trivia-bingo-tv.apk` to the GitHub repository with the other files.
+4. Open Downloader and enter `https://<username>.github.io/trivia-bingo/trivia-bingo-tv.apk`. When asked, allow Downloader to install apps, then tap **Install**. If Play Protect warns about an unknown app, choose **Install anyway**.
+5. Open **Trivia Bingo TV** from your apps. The first time, type your GitHub username and choose **Save**.
+
+**Each game:** open the app and type the game code from the host's phone. **Change game** (top right) picks a different code. The app remembers the last game.
+
+The app's source is in `trivia-bingo-tv-source.zip` (build with `build.sh` on Ubuntu). Keep `release.keystore` from that zip: future versions must be signed with it to install over the old one.
+
 ## Add it to your home screen
 
 - **iPhone:** open the link in **Safari** → **Share** → **Add to Home Screen**. It opens full screen with its own icon, like an app.

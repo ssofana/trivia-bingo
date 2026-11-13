@@ -247,6 +247,9 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 @keyframes tvpop{from{opacity:0;transform:translateY(1.4vh) scale(.97)}to{opacity:1;transform:none}}
 .tvbtnrow{display:flex;gap:1vw}
 .tvpick{display:flex;flex-direction:column;gap:12px}
+/* TV app start screen: scale the phone-sized panel up for the couch */
+html.tvapp .wrap{zoom:1.5}
+html.tvapp #status{font-size:15px}
 /* smooth stage changes */
 @media (prefers-reduced-motion:no-preference){
   .qcard.enter{animation:cardIn .4s cubic-bezier(.2,.8,.2,1)}
@@ -1276,7 +1279,10 @@ function inviteUrl(){ return location.origin+location.pathname+"#"+room; }
 
 /* =================== TV mode ===================
    This device shows the game for the room instead of playing. It never joins as a player. */
-let tvMode = store.get("tbq-tv")==="1", tvPick=false;
+/* the Android TV app opens the site with ?tvapp=1: this device is always the TV */
+const tvApp = new URLSearchParams(location.search).has("tvapp");
+if(tvApp){ store.set("tbq-tv","1"); document.documentElement.classList.add("tvapp"); document.documentElement.dataset.theme="dark"; }
+let tvMode = tvApp || store.get("tbq-tv")==="1", tvPick=false;
 let tvQRFor=null, tvLastDrawn=null, tvLastRev=null;
 const ARROW={more:'<svg viewBox="0 0 26 34"><path d="M13 0 L26 14 H17 V34 H9 V14 H0 Z" fill="#4fd18a"/></svg>',
              less:'<svg viewBox="0 0 26 34"><path d="M9 0 H17 V20 H26 L13 34 L0 20 H9 Z" fill="#ff6a5c"/></svg>'};
@@ -1384,13 +1390,18 @@ function tvTick(force){
   setLine(st, txt, n);
 }
 
-$("tvExit").onclick=()=>setTV(false);
+$("tvExit").onclick=()=>{
+  if(tvApp){ store.set("tbq-room",""); history.replaceState(null,"",location.pathname+location.search); showLobby(); return; }   // in the TV app: pick another game
+  setTV(false);
+};
+if(tvApp) $("tvExit").textContent="Change game";
 $("tvBtn").onclick=()=>setTV(true);
 $("tvPickBtn").onclick=()=>{ tvPick=true; lobbyUI(); $("codeIn").focus(); };
 $("tvCancelBtn").onclick=()=>{ tvPick=false; setTV(false); lobbyUI(); };
 function lobbyUI(){
   const pick = tvPick || tvMode;
-  $("createBtn").hidden = pick; $("tvPickBtn").hidden = pick; $("tvCancelBtn").hidden = !pick;
+  $("createBtn").hidden = pick; $("tvPickBtn").hidden = pick; $("tvCancelBtn").hidden = !pick || tvApp;
+  if(tvApp) setTimeout(()=>{ if(!$("lobby").hidden) $("codeIn").focus(); }, 300);
   document.querySelector("#lobby h2").textContent = pick ? "TV mode: enter the game code" : "Start or join a game";
   document.querySelector("#lobby .or").textContent = pick ? "The code is on the host's phone" : "or join with a game code";
   document.querySelector("#codeForm button").textContent = pick ? "Show on TV" : "Join";
