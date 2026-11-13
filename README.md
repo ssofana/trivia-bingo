@@ -86,12 +86,9 @@ What the TV shows:
 
 `trivia-bingo-tv.apk` is a small Android TV app that opens the site straight into TV mode, full screen, and keeps the TV awake during the game. It appears on the Google TV home screen with its own banner. It loads the live site, so website updates show up in the app automatically.
 
-**Install (once):**
-1. On the TV: **Settings → System → About**, scroll to **Android TV OS build** and press OK on it 7 times until it says you're a developer.
-2. Install **Downloader** (by AFTVnews) from the Google Play Store on the TV.
-3. Upload `trivia-bingo-tv.apk` to the GitHub repository with the other files.
-4. Open Downloader and enter `https://<username>.github.io/trivia-bingo/trivia-bingo-tv.apk`. When asked, allow Downloader to install apps, then tap **Install**. If Play Protect warns about an unknown app, choose **Install anyway**.
-5. Open **Trivia Bingo TV** from your apps. The first time, type your GitHub username and choose **Save**.
+**Install on the Hisense TV (from the Mac):** double-click **`6 - Install Trivia Bingo TV.command`** in `~/Documents/Hisense TV Backup/`. The first time, it asks for your GitHub username and sends the site address to the app, so there's nothing to type on the TV. It installs or updates the app over ADB, opens it once and saves a screenshot to `trivia-bingo-tv-screen.png`. The app then appears in Channel Menu with its own banner. To remove it, run **`Uninstall Trivia Bingo TV.command`**.
+
+**Other Google TVs (no Mac):** turn on developer mode (**Settings → System → About**, press OK on **Android TV OS build** 7 times), install **Downloader** from the Play Store, upload `trivia-bingo-tv.apk` to the GitHub repository, and open `https://<username>.github.io/trivia-bingo/trivia-bingo-tv.apk` in Downloader. The first launch asks for your GitHub username on the TV.
 
 **Each game:** open the app and type the game code from the host's phone. **Change game** (top right) picks a different code. The app remembers the last game.
 
