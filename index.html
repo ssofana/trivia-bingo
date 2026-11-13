@@ -13,6 +13,7 @@
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" type="image/png" href="icon-512.png">
 <link rel="manifest" href="manifest.json">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Figtree:wght@400;600;800&display=swap">
@@ -168,6 +169,84 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .nextline .n{font-family:var(--display);font-weight:400;font-size:20px;min-width:1.2em;text-align:center;color:var(--accent)}
 .nextline.lock .n{color:var(--ball)}
 .tbar.view i{background:var(--accent)}
+/* ================= TV mode =================
+   A single deliberate look for the big screen: deep navy like the card rim, white type, gold highlights.
+   Sizes scale with the screen so it reads from the couch on any TV browser. */
+.tv{position:fixed;inset:0;z-index:30;overflow:hidden;background:radial-gradient(ellipse at 50% 0%,#2b2a8c 0%,#17154d 55%,#0e0c33 100%);color:#fff;
+  font-family:var(--body);display:grid;grid-template-rows:auto 1fr;padding:2.2vh 3vw 3vh;gap:2vh;box-sizing:border-box;color-scheme:dark}
+.tv button{font:inherit;cursor:pointer}
+.tv :focus-visible{outline:.35vw solid #ffd34d;outline-offset:.3vw}
+.tvtop{display:flex;align-items:center;gap:2vw}
+.tvbrand{display:flex;align-items:center;gap:1vw;font-family:var(--display);font-size:2.2vw;letter-spacing:.04em}
+.tvball{width:3.6vw;height:3.6vw;font-size:2vw;flex:none}
+.tvcode{margin-left:auto;font-size:1.3vw;color:#c9c6f2;letter-spacing:.08em;text-transform:uppercase}
+.tvcode b{font-family:var(--display);font-weight:400;font-size:2.2vw;color:#fff;letter-spacing:.14em;margin-left:.6vw}
+.tvbtn{background:rgba(255,255,255,.1);color:#fff;border:.12vw solid rgba(255,255,255,.3);border-radius:999px;padding:.7vw 1.4vw;font-size:1.15vw;font-weight:700}
+.tvbody{min-height:0;position:relative}
+/* lobby */
+.tvlobby{height:100%;display:grid;grid-template-columns:auto 1fr;gap:4vw;align-items:center}
+.tvjoin{display:flex;flex-direction:column;align-items:center;gap:1.4vh;background:rgba(255,255,255,.06);border:.12vw solid rgba(255,255,255,.15);border-radius:2vw;padding:3vh 3vw}
+.tvqr{background:#fff;padding:1vw;border-radius:1.2vw;line-height:0}
+.tvqr img,.tvqr canvas{width:16vw!important;height:16vw!important;display:block}
+.tvjoin h2{margin:0;font-family:var(--display);font-weight:400;font-size:2.4vw}
+.tvurl{margin:0;font-size:1.3vw;color:#c9c6f2;max-width:24vw;text-align:center;overflow-wrap:anywhere}
+.tvbig{font-family:var(--display);font-size:5.2vw;letter-spacing:.14em;color:#ffd34d;line-height:1}
+.tvsmall{font-size:1.2vw;color:#c9c6f2;text-transform:uppercase;letter-spacing:.1em}
+.tvplayers h3{margin:0 0 2vh;font-family:var(--display);font-weight:400;font-size:3vw}
+.tvnames{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:1vw}
+.tvnames li{background:#fff;color:#1d1838;font-weight:800;font-size:2vw;padding:.8vw 1.8vw;border-radius:999px;animation:tvpop .4s cubic-bezier(.2,.8,.2,1) both}
+.tvnames li.host::after{content:" \2605";color:#e2a400}
+.tvwait{margin-top:3vh;font-size:1.6vw;color:#c9c6f2}
+/* playing */
+.tvplay{height:100%;display:grid;grid-template-columns:3fr 2fr;gap:3vw;min-height:0}
+.tvleft{display:flex;flex-direction:column;gap:2.4vh;min-height:0}
+.tvreader{display:flex;align-items:baseline;gap:1.2vw}
+.tvlbl{font-size:1.3vw;letter-spacing:.12em;text-transform:uppercase;color:#c9c6f2;font-weight:800}
+.tvreader b{font-family:var(--display);font-weight:400;font-size:3.6vw;color:#ffd34d;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tvcard{flex:1;min-height:0;background:#fff;color:#1d1838;border-radius:2vw;border:.6vw solid #3a38b8;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:2.4vh;padding:3vh 3vw;position:relative;overflow:hidden}
+.tvcat{font-size:1.3vw;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#6c6790}
+.tvq{font-size:clamp(20px,3.3vw,64px);font-weight:800;line-height:1.15;text-wrap:balance;max-width:34ch}
+.tvans{display:flex;align-items:center;gap:1.2vw;background:#2b2a8c;border-radius:1.6vw;padding:1.4vh 3vw}
+.tvnum{font-family:var(--display);font-size:8vw;line-height:1;color:#fff}
+.tvnum.more{color:#4fd18a}.tvnum.less{color:#ff6a5c}
+.tvarrow{width:4vw;height:5.6vw}.tvarrow svg{width:100%;height:100%;display:block}
+.tvmod{font-weight:900;font-size:2.4vw;letter-spacing:.02em}
+.tvmod.more{color:#1f8a4c}.tvmod.less{color:#d8443a}
+.tvright{display:flex;flex-direction:column;gap:2vh;min-height:0}
+.tvstatus{display:flex;align-items:center;justify-content:center;gap:1.2vw;min-height:9vh;background:rgba(255,255,255,.08);border-radius:1.6vw;font-size:2vw;font-weight:800;padding:0 1.6vw;text-align:center}
+.tvstatus .n{font-family:var(--display);font-weight:400;font-size:4.4vw;color:#ffd34d;min-width:1.2em}
+.tvstatus.lock{background:#e2403a}.tvstatus.lock .n{color:#fff}
+.tvlist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:1.2vh;overflow:hidden}
+.tvlist li{display:flex;align-items:center;gap:1.2vw;background:rgba(255,255,255,.07);border-radius:1.2vw;padding:1.2vh 1.4vw}
+.tvlist .nm{flex:1;min-width:0;display:flex;flex-direction:column}
+.tvlist .nm b{font-size:1.9vw;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tvlist .nm small{font-size:1.1vw;color:#c9c6f2}
+.tvchip{flex:none;font-weight:900;font-size:1.5vw;padding:.5vw 1.2vw;border-radius:999px;background:rgba(255,255,255,.12);color:#c9c6f2;white-space:nowrap}
+.tvchip.in{background:#4fd18a;color:#0d2a19}
+.tvchip.exact{background:#ffd34d;color:#1d1838}
+.tvchip.yes{background:#4fd18a;color:#0d2a19}
+.tvchip.no{background:#ff6a5c;color:#2a0c09}
+.tvchip.read{background:transparent;border:.12vw solid #ffd34d;color:#ffd34d}
+.tvdot{width:1.2vw;height:1.2vw;border-radius:50%;border:.15vw solid #c9c6f2;flex:none;box-sizing:border-box}
+.tvdot.on{background:#4fd18a;border-color:#4fd18a}
+/* winner */
+.tvwin{height:100%;box-sizing:border-box;overflow:hidden;padding:2vh 2vw;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.6vh;text-align:center;background:radial-gradient(circle at 50% 35%,#fff1b0 0%,#f5cf4f 45%,#dfa823 100%);color:#1d1838;border-radius:2vw}
+.tvwword{font-family:var(--display);font-size:min(9vw,15vh);line-height:.9;color:#1d1838;text-shadow:0 .5vw 0 rgba(255,255,255,.45)}
+.tvwwho{font-family:var(--display);font-size:min(4vw,7vh)}
+.tvwsub{font-size:min(1.6vw,3vh);font-weight:700;opacity:.85}
+.tvwcard{--c:min(3.6vw,6.4vh);display:grid;grid-template-columns:repeat(5,var(--c));gap:.5vw;padding:.7vw;border-radius:1.2vw;background:rgba(29,24,56,.1)}
+.tvwcard div{height:var(--c);border-radius:.7vw;display:grid;place-items:center;font-weight:900;font-size:calc(var(--c)*.4);background:rgba(255,255,255,.5)}
+.tvwcard .hit{background:#fff;color:#1f8a4c}.tvwcard .win{background:#2b2a8c;color:#fff}
+
+@media (prefers-reduced-motion:no-preference){
+  .tvcard.enter{animation:tvpop .45s cubic-bezier(.2,.8,.2,1)}
+  .tvans.pop{animation:numPop .6s cubic-bezier(.2,.8,.2,1)}
+  .tvlist li{animation:fadeUp .3s ease-out both}
+  .tvwword{animation:numPop .7s cubic-bezier(.2,.8,.2,1)}
+}
+@keyframes tvpop{from{opacity:0;transform:translateY(1.4vh) scale(.97)}to{opacity:1;transform:none}}
+.tvbtnrow{display:flex;gap:1vw}
+.tvpick{display:flex;flex-direction:column;gap:12px}
 /* smooth stage changes */
 @media (prefers-reduced-motion:no-preference){
   .qcard.enter{animation:cardIn .4s cubic-bezier(.2,.8,.2,1)}
@@ -278,6 +357,54 @@ li.cur .num{background:var(--ball);border-color:var(--ball);color:var(--ball-ink
 </style>
 </head>
 <body>
+<div class="tv" id="tv" hidden>
+  <div class="tvtop">
+    <div class="tvbrand"><div class="ball tvball" aria-hidden="true">?</div><span>TRIVIA BINGO</span></div>
+    <div class="tvcode">Game code<b id="tvCode"></b></div>
+    <div class="tvbtnrow">
+      <button class="tvbtn" id="tvExit" type="button">Exit TV mode</button>
+    </div>
+  </div>
+  <div class="tvbody">
+    <section class="tvlobby" id="tvLobby">
+      <div class="tvjoin">
+        <div class="tvqr" id="tvQR" aria-label="QR code to join"></div>
+        <h2>Join on your phone</h2>
+        <p class="tvurl" id="tvUrl"></p>
+        <span class="tvsmall">or enter code</span>
+        <div class="tvbig" id="tvCode2"></div>
+      </div>
+      <div class="tvplayers">
+        <h3 id="tvPCount">Players</h3>
+        <ul class="tvnames" id="tvNames"></ul>
+        <p class="tvwait" id="tvWait"></p>
+      </div>
+    </section>
+    <section class="tvplay" id="tvPlay" hidden>
+      <div class="tvleft">
+        <div class="tvreader"><span class="tvlbl">Reading now</span><b id="tvReader"></b></div>
+        <div class="tvcard" id="tvCard">
+          <div class="tvcat" id="tvCat"></div>
+          <div class="tvq" id="tvQ"></div>
+          <div class="tvans" id="tvAns"><span class="tvnum" id="tvNum">?</span><span class="tvarrow" id="tvArrow" hidden></span></div>
+          <div class="tvmod" id="tvMod"></div>
+        </div>
+      </div>
+      <div class="tvright">
+        <div class="tvstatus" id="tvStatus" aria-live="polite"></div>
+        <ul class="tvlist" id="tvList"></ul>
+      </div>
+    </section>
+    <section class="tvwin" id="tvWin" hidden>
+      <div class="tvwsub" id="tvWinTag">WE HAVE A WINNER</div>
+      <div class="tvwword">BINGO!</div>
+      <div class="tvwwho" id="tvWinWho"></div>
+      <div class="tvwcard" id="tvWinCard" hidden></div>
+      <div class="tvwsub" id="tvWinSub"></div>
+    </section>
+  </div>
+</div>
+
 <div class="wrap">
   <header id="hdr">
     <div class="ball" aria-hidden="true">?</div>
@@ -296,6 +423,8 @@ li.cur .num{background:var(--ball);border-color:var(--ball);color:var(--ball-ink
       <button class="pri" type="submit" style="flex:0 0 auto">Join</button>
     </form>
     <p class="msg" id="lobbyMsg" aria-live="polite"></p>
+    <button class="ghost" id="tvPickBtn" type="button" style="align-self:center">TV mode: show a game on this screen</button>
+    <button class="ghost" id="tvCancelBtn" type="button" style="align-self:center" hidden>Cancel TV mode</button>
   </section>
 
   <div id="game" hidden>
@@ -303,6 +432,7 @@ li.cur .num{background:var(--ball);border-color:var(--ball);color:var(--ball-ink
     <span class="lbl">Game code</span><span class="code" id="roomCode"></span>
     <span class="sp"></span>
     <button class="pri" id="shareBtn" type="button" style="padding:8px 12px;font-size:14px">Invite</button>
+    <button class="ghost" id="tvBtn" type="button">TV mode</button>
     <button class="ghost" id="switchBtn" type="button">Switch game</button>
   </div>
   <p class="msg" id="shareMsg" aria-live="polite" hidden></p>
@@ -697,6 +827,9 @@ function replay(el, cls){ el.classList.remove(cls); void el.offsetWidth; el.clas
 function fits(num){ if(!hasCard()) return false; const [n,,m]=BANK[state.card]; return m==="more" ? num>=n : num<=n; }
 
 function render(){
+  const tvOn = tvMode && !!room;
+  document.querySelector(".wrap").hidden = tvOn;        // the TV shows only the TV layout
+  if(tvOn){ renderTV(); } else $("tv").hidden=true;
   const p=ordered(), r=reader(), nx=nextReader(), mine=amReader(), digital=!!settings.digital, m0=me(), inGame=!!m0, live=playing();
   const host=players.find(x=>x.id===hostId);
   // ----- which screen -----
@@ -989,14 +1122,12 @@ $("cardSeg").addEventListener("click", e=>{ const b=e.target.closest("button[dat
 /* countdown */
 let beepedFor=0;
 function beep(){
-  try{ const a=new (window.AudioContext||window.webkitAudioContext)(); const o=a.createOscillator(), g=a.createGain();
-    o.frequency.value=880; o.connect(g); g.connect(a.destination); g.gain.setValueAtTime(.25,a.currentTime); g.gain.exponentialRampToValueAtTime(.001,a.currentTime+.6);
-    o.start(); o.stop(a.currentTime+.6); }catch(e){}
   try{ navigator.vibrate && navigator.vibrate([200,100,200]); }catch(e){}
 }
 function timeUp(){ const secs=Number(settings.timerSecs)||0; return secs>0 && !!state.drawnAt && serverNow() > state.drawnAt + secs*1000; }
 let bonusWasOpen=false;
 function tick(){
+  tvTick();
   if(playing()){
     const m0=me(), open=!!m0 && bonusOpenFor(m0), anyOpen=!!settings.digital && players.some(bonusOpenFor);
     if(open) $("bonusSecs").textContent=Math.ceil(bonusLeft()/1000)+"s";
@@ -1138,10 +1269,133 @@ let db, roomRef, stateRef, playersRef, picksRef, settingsRef, listeners=[];
 
 function showLobby(msg){
   room=null; listeners.forEach(u=>u()); listeners=[]; ready=false;
-  $("game").hidden=true; $("lobby").hidden=false; $("lobbyMsg").textContent=msg||"";
+  $("game").hidden=true; $("lobby").hidden=false; $("lobbyMsg").textContent=msg||""; lobbyUI(); render();
   $("status").textContent = uid ? "Signed in." : "Connecting…";
 }
 function inviteUrl(){ return location.origin+location.pathname+"#"+room; }
+
+/* =================== TV mode ===================
+   This device shows the game for the room instead of playing. It never joins as a player. */
+let tvMode = store.get("tbq-tv")==="1", tvPick=false;
+let tvQRFor=null, tvLastDrawn=null, tvLastRev=null;
+const ARROW={more:'<svg viewBox="0 0 26 34"><path d="M13 0 L26 14 H17 V34 H9 V14 H0 Z" fill="#4fd18a"/></svg>',
+             less:'<svg viewBox="0 0 26 34"><path d="M9 0 H17 V20 H26 L13 34 L0 20 H9 Z" fill="#ff6a5c"/></svg>'};
+
+function setTV(on){
+  tvMode=on; store.set("tbq-tv", on?"1":"");
+  render();
+}
+function renderTV(){
+  const tv=$("tv"); tv.hidden=false;
+  const live=playing(), p=ordered(), r=reader(), host=players.find(x=>x.id===hostId), digital=!!settings.digital;
+  const bg = live ? state.bingo : null, won = !!(bg && bg.confirmed);
+  $("tvCode").textContent=room||"";
+  $("tvLobby").hidden = live; $("tvPlay").hidden = !live || won; $("tvWin").hidden = !won;
+
+  if(!live){
+    // ----- lobby: how to join + who's in -----
+    $("tvUrl").textContent = location.host + location.pathname.replace(/\/$/,"");
+    $("tvCode2").textContent = room||"";
+    if(tvQRFor!==room && window.QRCode && room){
+      tvQRFor=room; const q=$("tvQR"); q.replaceChildren();
+      try{ new QRCode(q,{text:inviteUrl(), width:320, height:320, colorDark:"#1d1838", colorLight:"#ffffff", correctLevel:QRCode.CorrectLevel.M}); }catch(e){}
+    }
+    $("tvQR").hidden = !window.QRCode;
+    $("tvPCount").textContent = p.length ? "Players ("+p.length+")" : "Waiting for players";
+    const ul=$("tvNames");
+    const key=p.map(x=>x.id+":"+x.name).join("|")+"#"+hostId;
+    if(ul.dataset.k!==key){ ul.dataset.k=key; ul.replaceChildren();
+      p.forEach(pl=>{ const li=document.createElement("li"); li.textContent=pl.name; if(pl.id===hostId) li.className="host"; ul.append(li); }); }
+    $("tvWait").textContent = host ? (p.length ? "Waiting for "+host.name+" to start the game" : "Scan the code to join") : "";
+  } else if(won){
+    // ----- winner -----
+    $("tvWinWho").textContent = bg.name+" wins!";
+    $("tvWinSub").textContent = bg.digital ? "Two full lines. Nice game, everyone!" : "Nice game, everyone!";
+    const wp=players.find(x=>x.name===bg.name), card = digital && wp && wp.card ? wp.card : null, g=$("tvWinCard");
+    g.hidden=!card; g.replaceChildren();
+    if(card){ const wl=new Set(doneLines(card, wp.marked).flat());
+      card.forEach((num,i)=>{ const d=document.createElement("div"); d.className = wl.has(i)?"win":(wp.marked||{})[i]?"hit":""; d.textContent=num; g.append(d); }); }
+  } else {
+    // ----- playing: reader, question, everyone's status -----
+    const has=hasCard(), rev=has && state.revealed;
+    $("tvReader").textContent = r ? r.name : "";
+    if(has){
+      const [n,q,m,cat]=BANK[state.card];
+      $("tvCat").textContent = cat||""; $("tvQ").textContent = q;
+      $("tvNum").textContent = rev ? n : "?";
+      $("tvNum").className = "tvnum" + (rev ? " "+m : "");
+      $("tvArrow").hidden = !rev; if(rev) $("tvArrow").innerHTML = ARROW[m];
+      $("tvMod").textContent = rev ? (m==="more" ? "or more" : "or less") : "";
+      $("tvMod").className = "tvmod" + (rev ? " "+m : "");
+    } else {
+      $("tvCat").textContent=""; $("tvQ").textContent = r ? "Waiting for "+r.name+" to draw a question" : "Get ready";
+      $("tvNum").textContent="?"; $("tvNum").className="tvnum"; $("tvArrow").hidden=true; $("tvMod").textContent="";
+    }
+    if(has && state.drawnAt!==tvLastDrawn){ tvLastDrawn=state.drawnAt; replay($("tvCard"),"enter"); }
+    const rk = rev ? state.drawnAt : 0;
+    if(rk!==tvLastRev){ tvLastRev=rk; if(rev) replay($("tvAns"),"pop"); }
+
+    const ul=$("tvList"); ul.replaceChildren();
+    p.forEach(pl=>{
+      const li=document.createElement("li"), nm=document.createElement("div"); nm.className="nm";
+      const b=document.createElement("b"); b.textContent=pl.name; nm.append(b);
+      if(digital && pl.card){ const sm=document.createElement("small");
+        sm.textContent=Object.keys(pl.marked||{}).length+" correct · "+doneLines(pl.card, pl.marked).length+"/"+LINES_TO_WIN+" lines"; nm.append(sm); }
+      const chip=document.createElement("span"); chip.className="tvchip";
+      if(r && pl.id===r.id){ chip.classList.add("read"); chip.textContent="Reading"; }
+      else if(!has){ chip.textContent=""; chip.hidden=true; }
+      else if(!rev){
+        if(digital){ const done=pickIdx(pl.id)>=0; const d=document.createElement("span"); d.className="tvdot"+(done?" on":""); li.append(d);
+          chip.classList.toggle("in",done); chip.textContent = done ? "Answered" : "Thinking…"; }
+        else chip.hidden=true;
+      } else if(digital){
+        const i=pickIdx(pl.id), v = pl.card && i>=0 ? pl.card[i] : null;
+        if(v===null) chip.textContent="No pick";
+        else if(exactFor(pl)){ chip.classList.add("exact"); chip.textContent="★ Exact "+v; }
+        else if(fits(v)){ chip.classList.add("yes"); chip.textContent="✓ "+v; }
+        else { chip.classList.add("no"); chip.textContent="✗ "+v; }
+      } else {
+        const pressed=pickOf(pl.id)==="yes"; if(pressed){ chip.classList.add("yes"); chip.textContent="✓ Marked"; } else chip.hidden=true;
+      }
+      li.append(nm, chip); ul.append(li);
+    });
+    if(bg && !won) setLine($("tvStatus"), bg.name+" says Bingo! Checking the card…", "");
+  }
+  tvTick(true);
+}
+/* countdowns on the TV (runs 4x a second) */
+function tvTick(force){
+  if(!tvMode || !room || $("tv").hidden) return;
+  if(!playing() || state.bingo) return;
+  const st=$("tvStatus"), now=serverNow(), has=hasCard();
+  let txt="", n="", lock=false;
+  if(!has){ txt="Get ready…"; }
+  else if(!state.revealed){
+    const secs=Number(settings.timerSecs)||0;
+    if(state.lockAt){ const ms=Math.max(0,state.lockAt-now); lock=true; txt = ms>0 ? "Everyone's in! Locking in" : "Locked in!"; n = ms>0 ? Math.ceil(ms/1000) : ""; }
+    else if(settings.digital){ const o=others(); txt=o.filter(pl=>pickIdx(pl.id)>=0).length+" of "+o.length+" answered"; if(secs>0) n=Math.ceil(Math.max(0,state.drawnAt+secs*1000-now)/1000); }
+    else { txt="Answer out loud!"; if(secs>0) n=Math.ceil(Math.max(0,state.drawnAt+secs*1000-now)/1000); }
+  } else {
+    const ms=Math.max(0, advanceDue()-now), nx=nextReader();
+    txt = settings.digital && players.some(bonusOpenFor) ? "Bonus pick…" : nx ? nx.name+" reads next in" : "Next question in";
+    n = ms>0 ? Math.ceil(ms/1000) : "";
+  }
+  st.classList.toggle("lock", lock);
+  setLine(st, txt, n);
+}
+
+$("tvExit").onclick=()=>setTV(false);
+$("tvBtn").onclick=()=>setTV(true);
+$("tvPickBtn").onclick=()=>{ tvPick=true; lobbyUI(); $("codeIn").focus(); };
+$("tvCancelBtn").onclick=()=>{ tvPick=false; setTV(false); lobbyUI(); };
+function lobbyUI(){
+  const pick = tvPick || tvMode;
+  $("createBtn").hidden = pick; $("tvPickBtn").hidden = pick; $("tvCancelBtn").hidden = !pick;
+  document.querySelector("#lobby h2").textContent = pick ? "TV mode: enter the game code" : "Start or join a game";
+  document.querySelector("#lobby .or").textContent = pick ? "The code is on the host's phone" : "or join with a game code";
+  document.querySelector("#codeForm button").textContent = pick ? "Show on TV" : "Join";
+}
+
 
 async function enterRoom(code, fresh){
   code=(code||"").toUpperCase().trim();
@@ -1190,7 +1444,7 @@ $("createBtn").onclick=async()=>{
   $("createBtn").disabled=false;
   $("lobbyMsg").textContent="Couldn't start a game. Make sure Anonymous sign-in is on and the database rules are published in Firebase.";
 };
-$("codeForm").addEventListener("submit", e=>{ e.preventDefault(); enterRoom($("codeIn").value); });
+$("codeForm").addEventListener("submit", e=>{ e.preventDefault(); if(tvPick){ tvPick=false; tvMode=true; store.set("tbq-tv","1"); } enterRoom($("codeIn").value); });
 $("codeIn").addEventListener("input", e=>{ e.target.value=e.target.value.toUpperCase().replace(/[^A-Z0-9]/g,""); });
 $("switchBtn").onclick=()=>{ store.set("tbq-room",""); history.replaceState(null,"",location.pathname); showLobby(); };
 $("shareBtn").onclick=async()=>{

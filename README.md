@@ -41,7 +41,7 @@ Every card has a direction. For **19 or less**, any number from 1 to 19 is corre
 
 | Setting | Options | What it does |
 |---|---|---|
-| **Timer** | Off / 15s / 30s / 60s | Countdown from when a card is drawn. Beeps at zero and locks picks. |
+| **Timer** | Off / 15s / 30s / 60s | Countdown from when a card is drawn. Locks picks at zero (no sound). |
 | **Cards** | Paper / Digital | **Paper** works with the physical boards. **Digital** gives each player a 5×5 card on their phone. |
 | **Reveal** | Button on / Auto only | *Digital only.* **Button on** gives the reader a **Reveal now** button to reveal early. **Auto only** removes it, so answers reveal only after the lock-in countdown (or when the timer runs out). |
 | **Question** | Rectangle / Circle | Shape of the question card. **Rectangle** is compact on phones; **Circle** looks like the board game's round cards. |
@@ -64,6 +64,23 @@ Other players see who the host is and can only **Leave** themselves.
 - **Card checks out** confirms the win (with confetti). **False alarm** returns to the game.
 
 ---
+
+## TV mode
+
+Show the game on a TV so everyone can watch together. The TV only displays; it never joins as a player.
+
+1. On the TV, open the site in the TV's web browser.
+2. Choose **TV mode: show a game on this screen** and enter the game code from the host's phone. (Or, on any device already in the game's lobby, tap **TV mode** in the code bar.)
+3. The TV remembers the game, so reloading the page goes straight back to the TV view.
+
+What the TV shows:
+- **Lobby:** a QR code and link to join, the game code in large type, and every player's name as they join (the host is starred).
+- **Each question:** who is reading, the question in large type with the answer hidden as "?", and each player as **Thinking…** or **Answered**.
+- **Lock-in:** a red **Everyone's in! Locking in 5** countdown.
+- **Reveal:** the answer number in its arrow colour with **or more / or less**, each player's pick (★ exact, ✓ correct, ✗ missed), everyone's correct count and lines, and **Nick reads next in 6**.
+- **Winner:** a full-screen gold **BINGO!** with the winner's card, plus confetti.
+
+**Exit TV mode** (top right) returns that screen to the normal page.
 
 ## Add it to your home screen
 
