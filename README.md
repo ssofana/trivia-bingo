@@ -27,9 +27,9 @@ The game screen fits on one phone screen: who's reading (top bar), the question 
    - **Paper:** call out answers as usual.
 3. **Lock in and reveal.** *Digital:* once every player has answered, a **5-second lock-in countdown** starts on every phone, so there's still time to change your pick. Then the answer is revealed automatically. If the timer setting is on, the reveal also happens when time runs out. The reader can tap **Reveal now** to skip ahead. *Paper:* the reader taps **Reveal answer**.
    - **Digital:** a correct pick turns **green** and stays; a wrong pick turns **red**. The status line becomes the results: ★ exact, ✓ correct, ✗ missed.
-   - **Exact answer bonus:** pick the *exact* number and you get **10 seconds to claim a second number**, any square on your card.
+   - **Exact answer bonus:** pick the *exact* number and you earn a **bonus pick**: claim any square on your card. There's no time limit. A bar on your card says "You have a bonus pick"; tap **Use it**, then a square (or **Not now** to save it for later). Bonus picks add up, and reset when a new game starts.
    - **Paper:** if you got it right, tap **Number pressed**.
-4. **Next.** There's no button: the answer and results stay on screen for **6 seconds** (8 for paper boards), with a countdown like "Nick reads next in 4". Then the next reader's question appears by itself. After an exact answer it waits up to 10 seconds for the bonus pick. If the reader's phone goes to sleep, the other phones keep the game moving.
+4. **Next.** There's no button: the answer and results stay on screen for **6 seconds** (8 for paper boards), with a countdown like "Nick reads next in 4". Then the next reader's question appears by itself. If the reader's phone goes to sleep, the other phones keep the game moving.
 5. **Bingo.** Tap **BINGO!** when you win. A full-screen gold winner screen with confetti appears on every phone, and the host chooses **Replay** or **Back to lobby**.
 
 ### "Or more" and "or less"
@@ -103,7 +103,7 @@ The app's source is in `trivia-bingo-tv-source.zip` (build with `build.sh` on Ub
 
 ## Question deck
 
-There are 228 questions, at least four for every number from 1 to 31, across **Math, Geography, History, Movies, Pop culture, Sports, Basketball, Baseball, Games, Video games, Cartoons, Vine, TikTok & trends** and **Fun facts**. A card won't repeat until the whole deck has been used. Trend questions ask about years and fixed details (e.g. "The year of the Ice Bucket Challenge (20__)"), so they don't go out of date.
+There are 293 questions, at least six for every number from 1 to 31, across **General knowledge, Math, Geography, History, Movies, Pop culture, Sports, Basketball, Baseball, Games, Video games, Cartoons, Vine, TikTok & trends** and **Fun facts**. A card won't repeat until the whole deck has been used. Trend questions ask about years and fixed details (e.g. "The year of the Ice Bucket Challenge (20__)"), so they don't go out of date.
 
 ### Edit or add questions
 In `index.html`, find `const BANK = [`. Each line is one card:
@@ -160,7 +160,7 @@ rooms/<CODE>/
   host        uid of the person who created the game
   settings    timerSecs, digital, round, phase, shape, revealBtn    (host only)
   state       turn, card, revealed, revealedAt, lockAt, used, bingo   (players in the game)
-  players/<uid>  name, at, card, marked, misses, bonus   (that player, or the host)
+  players/<uid>  name, at, card, marked, misses, bonuses   (that player, or the host)
   picks/<uid>    the player's pick for the current question  (that player)
 ```
 

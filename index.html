@@ -151,7 +151,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .cardbox .sq{aspect-ratio:5/4;border-radius:10px;font-size:clamp(16px,5vw,20px)}
 .cmsg{font-size:13px;color:var(--muted);text-align:center;min-height:1.3em}
 .cardbox .bonusbar{padding:8px 12px;font-size:14px}
-.cardbox .bonusbar .secs{font-size:18px}
+.cardbox .bonusbar .bonususe{padding:6px 12px;font-size:14px}
 #hostPlay{justify-content:center}
 /* your turn: the top bar lights up in the accent colour */
 .gbar.myturn{background:var(--accent);color:var(--accent-ink);border-radius:16px;padding:8px 12px;margin-top:2px;box-shadow:0 6px 18px color-mix(in srgb,var(--accent) 35%,transparent)}
@@ -271,7 +271,7 @@ html.tvapp #status{font-size:15px}
 .rlist .rnum{font-family:var(--display);font-size:15px;color:var(--muted);font-variant-numeric:tabular-nums}
 .chip.exact{background:var(--up-line);color:#1d1838}
 .bonusbar{display:flex;align-items:center;gap:10px;background:var(--up);border:2px solid var(--up-line);border-radius:12px;padding:10px 12px;font-weight:800}
-.bonusbar .secs{margin-left:auto;font-family:var(--display);font-size:22px;font-variant-numeric:tabular-nums}
+.bonusbar .bonususe{margin-left:auto;flex:none;background:var(--fg);color:var(--bg);border-radius:999px;padding:8px 14px;font-weight:800}
 .sq.open{border:2.5px dashed var(--up-line)}
 .stack{display:flex;flex-direction:column;gap:20px}
 .hostpanel h2{margin-bottom:2px}
@@ -506,7 +506,7 @@ li.cur .num{background:var(--ball);border-color:var(--ball);color:var(--ball-ink
 
   <section class="cardbox" id="cardBox" hidden>
     <div class="cardhead"><span class="ch-title">YOUR CARD</span><span class="legend" id="cardCount"></span></div>
-    <div class="bonusbar" id="bonusBar" hidden><span id="bonusText">Exact! Tap any number for a bonus</span><span class="secs" id="bonusSecs"></span></div>
+    <div class="bonusbar" id="bonusBar" hidden><span id="bonusText"></span><button class="bonususe" id="bonusBtn" type="button">Use it</button></div>
     <div class="grid" id="grid"></div>
     <div class="cmsg" id="cardMsg"></div>
   </section>
@@ -787,7 +787,72 @@ const BANK = [
  [31, "The 11th prime number", "less", "Math"],
  [31, "The number of states in Mexico, not counting Mexico City", "less", "Geography"],
  [31, "The number of flavours Baskin-Robbins is famous for", "less", "Pop culture"],
- [31, "Days in July", "less", "Fun facts"]
+ [31, "Days in July", "less", "Fun facts"],
+ [1, "The number of moons Earth has", "less", "General knowledge"],
+ [3, "The number of hearts an octopus has", "more", "General knowledge"],
+ [4, "The number of chambers in the human heart", "less", "General knowledge"],
+ [5, "The number of rings on the Olympic flag", "more", "General knowledge"],
+ [6, "The number of legs on an insect", "less", "General knowledge"],
+ [7, "The number of colours in a rainbow", "more", "General knowledge"],
+ [8, "The number of planets in our solar system", "less", "General knowledge"],
+ [9, "The number of lives a cat traditionally has", "more", "General knowledge"],
+ [10, "The number of amendments in the US Bill of Rights", "less", "General knowledge"],
+ [11, "The number of herbs and spices in KFC's Original Recipe", "more", "General knowledge"],
+ [12, "The number of signs in the Western zodiac", "less", "General knowledge"],
+ [13, "The number of stripes on the US flag", "more", "General knowledge"],
+ [14, "The number of days in a fortnight", "less", "General knowledge"],
+ [15, "The number of numbered balls on a pool table", "less", "General knowledge"],
+ [16, "The number of ounces in a pound", "more", "General knowledge"],
+ [17, "The total number of syllables in a haiku", "less", "General knowledge"],
+ [19, "The legal drinking age in Ontario", "more", "General knowledge"],
+ [20, "The number of baby teeth a child usually has", "more", "General knowledge"],
+ [21, "The total number of dots on a standard six-sided die", "more", "General knowledge"],
+ [23, "The number of pairs of chromosomes in a human cell", "more", "General knowledge"],
+ [24, "The number of karats in pure gold", "less", "General knowledge"],
+ [25, "The anniversary year celebrated with silver", "less", "General knowledge"],
+ [26, "The number of letters in the English alphabet", "more", "General knowledge"],
+ [27, "The number of bones in one human hand", "more", "General knowledge"],
+ [28, "The number of days in February in a non-leap year", "less", "General knowledge"],
+ [29, "The number of days in February in a leap year", "more", "General knowledge"],
+ [30, "The anniversary year celebrated with pearl", "more", "General knowledge"],
+ [31, "The number of days in December", "less", "General knowledge"],
+ [2, "The number of countries that border the United States", "less", "Geography"],
+ [3, "The number of Baltic states", "more", "Geography"],
+ [4, "The number of US states that meet at the Four Corners", "more", "Geography"],
+ [5, "The number of Great Lakes", "less", "Geography"],
+ [5, "The number of boroughs in New York City", "more", "Geography"],
+ [6, "The number of time zones in Canada", "more", "Geography"],
+ [6, "The number of US states in New England", "less", "Geography"],
+ [7, "The number of continents", "more", "Geography"],
+ [7, "The number of hills Rome was famously built on", "less", "Geography"],
+ [8, "The number of countries that border mainland France", "more", "Geography"],
+ [8, "The number of countries the Alps stretch across", "less", "Geography"],
+ [10, "The number of provinces in Canada", "less", "Geography"],
+ [10, "The number of countries that border Brazil", "more", "Geography"],
+ [11, "The number of time zones in Russia", "less", "Geography"],
+ [14, "The number of countries that border China", "more", "Geography"],
+ [15, "The number of countries that made up the Soviet Union", "more", "Geography"],
+ [22, "The number of members of the Arab League", "less", "Geography"],
+ [26, "The number of counties in the Republic of Ireland", "less", "Geography"],
+ [28, "The number of states in India", "less", "Geography"],
+ [3, "The number of zeros in one thousand", "less", "Math"],
+ [7, "The square root of 49", "more", "Math"],
+ [8, "The number of corners on a cube", "more", "Math"],
+ [10, "The sum of the digits of 2026", "less", "Math"],
+ [12, "The number of inches in a foot", "less", "Math"],
+ [13, "The number of cards in each suit of a standard deck", "less", "Math"],
+ [14, "The Roman numeral XIV", "more", "Math"],
+ [15, "25% of 60", "more", "Math"],
+ [18, "20% of 90", "less", "Math"],
+ [21, "7 times 3", "less", "Math"],
+ [22, "The Roman numeral XXII", "more", "Math"],
+ [24, "The lowest common multiple of 6 and 8", "more", "Math"],
+ [25, "5 squared", "less", "Math"],
+ [27, "The number of small cubes in a 3×3×3 block", "more", "Math"],
+ [28, "The number of dominoes in a double-six set", "more", "Math"],
+ [29, "The Roman numeral XXIX", "less", "Math"],
+ [30, "The greatest common factor of 60 and 90", "less", "Math"],
+ [31, "2 to the power of 5, minus 1", "less", "Math"]
 ];
 
 const $=id=>document.getElementById(id);
@@ -819,11 +884,10 @@ const hasCard=()=>state.card!==null && state.card!==undefined && !!BANK[state.ca
 /* a pick only counts for the question it was made on */
 function pickOf(id){ const p=picks[id]; return p && state.drawnAt && p.q===state.drawnAt ? p.v : null; }
 function pickIdx(id){ const v=pickOf(id); return typeof v==="string" && v.startsWith("sq") ? Number(v.slice(2)) : -1; }
-/* exact answer = a bonus pick, open for 10 seconds after the reveal */
-const BONUS_MS=10000;
+/* exact answer = a saved bonus pick: no time limit, use it whenever you like */
 function exactFor(pl){ const i=pickIdx(pl.id); return !!pl.card && i>=0 && hasCard() && pl.card[i]===BANK[state.card][0]; }
-function bonusLeft(){ return state.revealed && state.revealedAt ? Math.max(0, state.revealedAt + BONUS_MS - serverNow()) : 0; }
-function bonusOpenFor(pl){ return !!pl && !!settings.digital && bonusLeft()>0 && exactFor(pl) && pl.bonus!==state.drawnAt; }
+function bonusesOf(pl){ return Math.max(0, Number(pl && pl.bonuses)||0); }
+let bonusMode=false, lastBonuses=null;
 const playing=()=>settings.phase==="playing";
 let lastTurnId=null, lastDrawn=null, lastRev=null, lastStage=null;
 function replay(el, cls){ el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); }
@@ -964,8 +1028,16 @@ function render(){
   const lines = myCard ? doneLines(myCard, m0.marked) : [];
   const line = lines.length >= LINES_TO_WIN;
   const winSet = new Set(lines.flat());
-  const myBonus = myCard && bonusOpenFor(m0);
-  $("bonusBar").hidden = !myBonus;
+  const myBonuses = myCard ? bonusesOf(m0) : 0;
+  if(lastBonuses!==null && myBonuses>lastBonuses) bonusMode=true;     // just earned one: ready to use
+  lastBonuses = myCard ? myBonuses : null;
+  if(!myBonuses) bonusMode=false;
+  const myBonus = !!myCard && bonusMode && myBonuses>0;
+  $("bonusBar").hidden = !myCard || !myBonuses;
+  if(myCard && myBonuses){
+    $("bonusText").textContent = myBonus ? "Bonus pick: tap any open number" : myBonuses===1 ? "You have a bonus pick" : "You have "+myBonuses+" bonus picks";
+    $("bonusBtn").textContent = myBonus ? "Not now" : "Use it";
+  }
   $("cardBox").hidden = !myCard;
   if(myCard){
     const pi = pickIdx(uid), marked=m0.marked||{}, misses=m0.misses||{};
@@ -994,7 +1066,7 @@ function render(){
     else if(!rev) msg = picksClosed() ? (pi>=0 ? "Locked in "+myCard[pi]+"." : "Time's up.")
                       : state.lockAt ? (pi>=0 ? "Picked "+myCard[pi]+". Change it before the countdown ends." : "Quick, tap your answer!")
                       : pi>=0 ? "Picked "+myCard[pi]+". Tap to change." : "Tap your answer. Exact answers earn a bonus.";
-    else if(pi>=0 && exactFor(m0)) msg = m0.bonus===state.drawnAt ? "Exact! Bonus claimed." : "Exact!";
+    else if(pi>=0 && exactFor(m0)) msg = "Exact! You earned a bonus pick.";
     else if(pi>=0 && fits(myCard[pi])) msg="Correct! "+myCard[pi]+" is yours.";
     else if(pi>=0) msg="Not this time.";
     else msg = mine ? "" : "No pick this round.";
@@ -1035,10 +1107,12 @@ function syncMe(){
   const m0=me(); if(!ready || !m0 || syncing || Date.now()-syncFailAt<5000) return;
   const patch={};
   if(playing() && settings.digital && (!m0.card || (m0.round||0)!==(settings.round||0))){
-    Object.assign(patch,{card:newCard(), round:settings.round||0, marked:null, misses:null, scored:null});
+    Object.assign(patch,{card:newCard(), round:settings.round||0, marked:null, misses:null, scored:null, bonuses:null});
   } else if(settings.digital && m0.card && state.revealed && hasCard() && m0.scored!==state.drawnAt){
     const i=pickIdx(uid);
-    if(i>=0){ if(fits(m0.card[i])){ patch["marked/"+i]=true; patch["misses/"+i]=null; } else patch["misses/"+i]=true; }
+    if(i>=0){ if(fits(m0.card[i])){ patch["marked/"+i]=true; patch["misses/"+i]=null;
+                    if(m0.card[i]===BANK[state.card][0]) patch.bonuses=bonusesOf(m0)+1; }      // exact: earn a bonus pick
+              else patch["misses/"+i]=true; }
     patch.scored=state.drawnAt;
   } else if(amReader() && m0.misses && Object.keys(m0.misses).length){
     patch.misses=null;
@@ -1087,7 +1161,6 @@ function revealDue(){
 function advanceDue(){
   if(!state.revealed || !state.revealedAt) return 0;
   let t = state.revealedAt + (settings.digital ? VIEW_MS : VIEW_PAPER_MS);
-  if(settings.digital && players.some(bonusOpenFor)) t = Math.max(t, state.revealedAt + BONUS_MS);
   return t;
 }
 let busy=false;
@@ -1128,15 +1201,10 @@ function beep(){
   try{ navigator.vibrate && navigator.vibrate([200,100,200]); }catch(e){}
 }
 function timeUp(){ const secs=Number(settings.timerSecs)||0; return secs>0 && !!state.drawnAt && serverNow() > state.drawnAt + secs*1000; }
-let bonusWasOpen=false;
 function tick(){
   tvTick();
   if(playing()){
-    const m0=me(), open=!!m0 && bonusOpenFor(m0), anyOpen=!!settings.digital && players.some(bonusOpenFor);
-    if(open) $("bonusSecs").textContent=Math.ceil(bonusLeft()/1000)+"s";
     driver();
-    if(bonusWasOpen && !anyOpen){ bonusWasOpen=false; render(); return; }
-    bonusWasOpen = anyOpen;
   }
   const t=$("timer"), tb=$("tbar"), nl=$("nextLine"), secs=Number(settings.timerSecs)||0, now=serverNow();
   const has=hasCard(), live=playing() && !state.bingo;
@@ -1154,9 +1222,8 @@ function tick(){
     const due=advanceDue(), total=Math.max(1, due-state.revealedAt), ms=Math.max(0, due-now);
     t.hidden=true; tb.hidden=false; tb.classList.remove("low"); tb.classList.add("view"); $("tfill").style.width=(100*ms/total)+"%";
     const nx=nextReader(), who = nx ? (nx.id===uid ? "You read next" : nx.name+" reads next") : "Next question";
-    const bonusWait = settings.digital && players.some(bonusOpenFor);
     nl.hidden=false; nl.className="nextline";
-    setLine(nl, bonusWait ? "Waiting for bonus picks\u2026" : who+" in", ms>0 ? Math.ceil(ms/1000) : "");
+    setLine(nl, who+" in", ms>0 ? Math.ceil(ms/1000) : "");
     return;
   }
   nl.hidden=true; tb.classList.remove("view");
@@ -1215,10 +1282,12 @@ function newCard(){
   let c; do{ c=randomCard(); }while(used.has(cardKey(c))); return c;
 }
 async function useBonus(i){
-  const m0=me(); if(!m0 || !bonusOpenFor(m0) || (m0.marked||{})[i]) return;
-  try{ await update(child(playersRef, uid), {["marked/"+i]:true, ["misses/"+i]:null, bonus:state.drawnAt}); }
+  const m0=me(), n=bonusesOf(m0); if(!m0 || !n || (m0.marked||{})[i]) return;
+  bonusMode=false;
+  try{ await update(child(playersRef, uid), {["marked/"+i]:true, ["misses/"+i]:null, bonuses:n-1}); }
   catch(e){ $("cardMsg").textContent="Couldn't claim that number. Try again."; }
 }
+$("bonusBtn").onclick=()=>{ bonusMode=!bonusMode; render(); };
 async function tapSquare(i){
   if(!hasCard()||state.revealed||amReader()||picksClosed()) return;
   setPick(pickOf(uid)==="sq"+i ? null : "sq"+i);
@@ -1383,7 +1452,7 @@ function tvTick(force){
     else { txt="Answer out loud!"; if(secs>0) n=Math.ceil(Math.max(0,state.drawnAt+secs*1000-now)/1000); }
   } else {
     const ms=Math.max(0, advanceDue()-now), nx=nextReader();
-    txt = settings.digital && players.some(bonusOpenFor) ? "Bonus pick…" : nx ? nx.name+" reads next in" : "Next question in";
+    txt = nx ? nx.name+" reads next in" : "Next question in";
     n = ms>0 ? Math.ceil(ms/1000) : "";
   }
   st.classList.toggle("lock", lock);
@@ -1434,7 +1503,7 @@ async function enterRoom(code, fresh){
     players = Object.entries(v||{}).map(([id,d])=>{
       let card = d.card ? (Array.isArray(d.card) ? d.card : Object.values(d.card)).map(Number) : null;
       if(card && card.length!==25) card=null;
-      return {id, name:String(d.name||""), at:Number(d.at)||0, card, round:Number(d.round)||0, scored:d.scored, bonus:d.bonus, marked:d.marked||{}, misses:d.misses||{}};
+      return {id, name:String(d.name||""), at:Number(d.at)||0, card, round:Number(d.round)||0, scored:d.scored, bonuses:Number(d.bonuses)||0, marked:d.marked||{}, misses:d.misses||{}};
     });
   });
   on(picksRef, v=>{ picks=v||{}; });
